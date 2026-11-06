@@ -2,7 +2,8 @@
 
 Objetivo: aplicación WPF de escritorio que automatice el procesamiento mensual de pólizas en 5 fases, operada por un analista que confirma entre fases.
 Spec fuente: `Specs/especificacion-fon-prebel-v0.10.md` (1935 líneas, versión 0.10).
-Rama: `feature/fonprebel-app` (se crea en el primer commit de código). Entrega: `ask-on-risk`. Runner: `dotnet test` (xUnit).
+Rama: `feature/fonprebel-app` (creada). Entrega: **`feature-branch-chain`** (decidido por el usuario el 2026-11-06). Runner: `dotnet test` (xUnit).
+Cortes de PR previstos: **1)** D1-D5 + A1 (commit `77d446c` y `325d364`); **2)** A2-A7; **3)** A8-A10 + B1-B7; **4)** C1-C4. Los cortes se ajustan si un tramo crece demasiado.
 
 ---
 

@@ -3,6 +3,7 @@ using System.Windows.Threading;
 using FonPrebel.Infrastructure.Database;
 using FonPrebel.Infrastructure.FileStorage;
 using FonPrebel.Infrastructure.Logging;
+using FonPrebel.Infrastructure.Security;
 using FonPrebel.Presentation.ViewModels;
 using FonPrebel.Presentation.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,11 @@ namespace FonPrebel;
 /// Arranque de la aplicación: el contenedor de dependencias del host arma el grafo de objetos y la
 /// ventana principal se resuelve de él. No hay estado global más allá del host y del logger.
 /// </summary>
-public partial class App : Application
+/// <remarks>
+/// El tipo base se califica porque <c>FonPrebel.Application</c> es la capa de contratos y, dentro del
+/// espacio de nombres <c>FonPrebel</c>, oculta al <c>Application</c> de WPF.
+/// </remarks>
+public partial class App : System.Windows.Application
 {
     private readonly IHost _host;
 
@@ -30,6 +35,9 @@ public partial class App : Application
             {
                 services.AddFonPrebelLogging(paths);
                 services.AddFonPrebelDatabase(paths);
+
+                // S7: la credencial de correo se guarda cifrada con DPAPI y se descifra bajo demanda.
+                services.AddFonPrebelSecurity();
 
                 services.AddSingleton<ExecutionViewModel>();
                 services.AddSingleton<HistoryViewModel>();

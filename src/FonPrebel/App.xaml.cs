@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using FonPrebel.Infrastructure.Database;
 using FonPrebel.Infrastructure.FileStorage;
 using FonPrebel.Infrastructure.Logging;
 using FonPrebel.Presentation.ViewModels;
@@ -28,6 +29,7 @@ public partial class App : Application
             .ConfigureServices(services =>
             {
                 services.AddFonPrebelLogging(paths);
+                services.AddFonPrebelDatabase(paths);
 
                 services.AddSingleton<ExecutionViewModel>();
                 services.AddSingleton<HistoryViewModel>();
@@ -50,6 +52,18 @@ public partial class App : Application
         await _host.StartAsync();
 
         Log.Information("Aplicación iniciada");
+
+        // S3: la base se prepara antes de abrir la ventana; si no se pudo, el error se muestra de forma
+        // visible y la aplicación se cierra, en vez de quedar abierta sin persistencia.
+        DatabaseStartupService database = _host.Services.GetRequiredService<DatabaseStartupService>();
+        if (!database.Succeeded)
+        {
+            ShowDatabaseStartupError(database.Failure);
+            Shutdown(1);
+            base.OnStartup(e);
+
+            return;
+        }
 
         MainWindow window = _host.Services.GetRequiredService<MainWindow>();
         window.Show();
@@ -77,5 +91,23 @@ public partial class App : Application
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         Log.Error(e.Exception, "Error no controlado en la interfaz");
+    }
+
+    /// <summary>
+    /// S3: el detalle del fallo de la base se muestra en pantalla y queda en <c>errors.log</c>; no se
+    /// borra ni se recrea el archivo, y el mensaje no incluye credenciales.
+    /// </summary>
+    private static void ShowDatabaseStartupError(Exception? failure)
+    {
+        string detail = failure?.Message ?? "Error desconocido";
+
+        MessageBox.Show(
+            "No se pudo preparar la base de datos local.\n\n" +
+            $"Detalle: {detail}\n\n" +
+            "La base existente no se borró ni se recreó. Revisa el archivo errors.log del día antes de " +
+            "volver a abrir la aplicación.",
+            "Base de datos no disponible",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
     }
 }

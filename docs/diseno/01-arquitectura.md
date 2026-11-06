@@ -143,3 +143,20 @@ El requisito del usuario es que se pruebe en su máquina personal y funcione en 
 | Un proyecto WPF sin `App.xaml` no genera `Main` | `dotnet test` falla con `CS5001` hasta que existe el punto de entrada |
 
 Build y pruebas verificados: `dotnet build FonPrebel.sln` sin errores ni advertencias, `dotnet test FonPrebel.sln` con 6 de 6 pruebas correctas, y la aplicación arranca y permanece en ejecución.
+
+## 10. Hallazgos de A2 y A3 (verificados en ejecución)
+
+| Hallazgo | Consecuencia |
+|---|---|
+| `Serilog.Sinks.File` 6.0.0 no admite la fecha en la ruta del archivo | La carpeta `Logs/YYYY-MM-DD` exige un sink propio (`DailyFileSink`) que reabre el destino cuando cambia el día del evento |
+| `shared: true` + `buffered: false` en el sink de archivo | La UI puede leer `execution.log` mientras la aplicación sigue escribiendo |
+| `dotnet new tool-manifest` del SDK 10 escribe el manifiesto en la raíz del repo | Se mueve a `.config/dotnet-tools.json`, que es la ruta convencional |
+| `Microsoft.Data.Sqlite` no implementa `GetSchema("Tables")` | Las pruebas de esquema consultan `sqlite_master` |
+| `PRAGMA journal_mode` y `PRAGMA busy_timeout` no tienen API en `Microsoft.Data.Sqlite` | Ver la excepción documentada abajo |
+| Un contexto nuevo no carga colecciones de navegación sin `Include` | Las pruebas de esquema las piden explícitamente |
+
+### 10.1 Excepción documentada a la §2.7 (SQL en texto)
+
+La §2.7 prohíbe escribir SQL en texto dentro del código. Se cumple en todo el acceso a datos: las consultas son LINQ y el esquema se declara con Fluent API, incluido el `CHECK ("Id" = 1)` de `EmailConfiguration`, que es metadato de esquema.
+
+Queda **una única excepción**, en `Infrastructure/Database/SqlitePragmaInterceptor.cs`: dos sentencias `PRAGMA` como texto (`journal_mode = WAL` y `busy_timeout`). No son consultas de negocio, no leen ni escriben datos de la aplicación, y `Microsoft.Data.Sqlite` no expone ninguna API para fijarlas. Sin ellas no se puede cumplir el requisito del §2.6 de activar WAL y el tiempo de espera ante bloqueo. Se documenta acá para que no parezca una violación inadvertida: si el banco exige cero texto SQL, la alternativa es un `SqliteConnection` con interceptor nativo, que hoy no existe en la librería.

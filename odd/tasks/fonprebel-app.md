@@ -3,7 +3,12 @@
 Objetivo: aplicación WPF de escritorio que automatice el procesamiento mensual de pólizas en 5 fases, operada por un analista que confirma entre fases.
 Spec fuente: `Specs/especificacion-fon-prebel-v0.10.md` (1935 líneas, versión 0.10).
 Rama: `feature/fonprebel-app` (creada). Entrega: **`feature-branch-chain`** (decidido por el usuario el 2026-11-06). Runner: `dotnet test` (xUnit).
-Cortes de PR previstos: **1)** D1-D5 + A1 (commit `77d446c` y `325d364`); **2)** A2-A7; **3)** A8-A10 + B1-B7; **4)** C1-C4. Los cortes se ajustan si un tramo crece demasiado.
+Cortes de PR, con los commits reales:
+**1)** D1-D5 + A1 → `77d446c`, `325d364`, `2169a73`.
+**2)** A2-A7 → abierto con `e19091f` (A2).
+**3)** A8-A10 + B1-B7.
+**4)** C1-C4.
+El conteo acumulado ronda las 4600 líneas autoradas contando el spec original de 1935 líneas que ya estaba en el repo; el código y la documentación propios son unas 2600.
 
 ---
 
@@ -91,9 +96,9 @@ S23. Prohibiciones: sin Mediator, buses, CQRS, repositorios genéricos ni patron
 | D5 | Matriz de configuración y credenciales con criterios de validación | S6,S7 | inline | hecho | `docs/diseno/04-configuracion.md` |
 | A1 | Solución en Visual Studio: proyecto WPF + WPF-UI + MVVM + DI + navegación de 7 secciones | S1,S16 | hecho | `FonPrebel.sln` + `src/FonPrebel` + 6 pruebas en verde |
 | A2 | Rutas de datos locales, Serilog con `execution.log`/`errors.log` y paneles en UI | S5,S17 | hecho | `AppPaths`, `Infrastructure/Logging/*`, pantalla Logs; 26 pruebas en verde y log real escrito |
-| A3 | EF Core SQLite: contextos de vida corta, WAL, migraciones y auto-aplicación al iniciar | S3 | pendiente | | |
+| A3 | EF Core SQLite: contextos de vida corta, WAL, migraciones y auto-aplicación al iniciar | S3 | hecho | 7 entidades, `InitialCreate`, WAL real, 37 pruebas en verde, base creada en `%LOCALAPPDATA%` |
 | A4 | Proveedor de credenciales DPAPI | S7 | pendiente | | |
-| A5 | Pantalla Configuración con validación por campo y gate de INICIAR | S6,S18 | pendiente | | |
+| A5 | Pantalla Configuración con validación por campo y gate de INICIAR | S6,S18 | pendiente | | Obligación heredada de A3: sembrar en `AppConfiguration` los dos únicos valores que el spec confirma (`Connections.AutoCheckMinutes = 2`, `Database.WalEnabled = true`). Hoy la tabla está vacía y el código las asume. |
 | A6 | Pantalla Conexiones: prueba de servidor de archivos y de correo, punto de estado, rechequeo cada 2 minutos | S19 | pendiente | | |
 | A7 | Lotes, ejecuciones, historial y reanudación con huellas | S8,S20 | pendiente | | |
 | A8 | Alertas críticas modales, notificaciones toast y modal de seguimiento | S16,S19 | pendiente | | |
@@ -157,3 +162,5 @@ El gate de writers exige referenciar la tarea como `T<n>`. El alias es la posici
 L9 — 2026-11-06 — A1 implementado y verificado. Comandos observados: `dotnet build FonPrebel.sln -v q` → "Compilación correcta. 0 Advertencia(s) 0 Errores"; `dotnet test FonPrebel.sln --nologo` → "Con error: 0, Superado: 6, Omitido: 0, Total: 6"; arranque real de `FonPrebel.exe` → seguía en ejecución a los 7 segundos (se cerró desde el script). Hallazgos: el SDK 10 crea `.slnx` por defecto y **VS 2022 no lo abre**, así que la solución se generó con `--format sln` (D-03); `NavigationView` de WPF-UI 4.3.0 no acepta contenido hijo, así que la ventana es un `Grid` de dos columnas; `SelectedItem` tiene setter inaccesible y el resaltado inicial se logra con `IsActive = true`. Archivo de código más grande: 91 líneas, dentro del límite de 400.
 
 L10 — 2026-11-06 — A2 implementado y verificado por el padre, incluido el runtime que el worker no ejecutó. Observado: `dotnet build FonPrebel.sln -v q` → "Compilación correcta"; `dotnet test FonPrebel.sln --nologo` → 26 superadas, 0 con error (6 previas de SectionCatalog + 20 nuevas); arranque real de `FonPrebel.exe` → RUNNING_OK; y prueba de punta a punta de S17: se creó `%LOCALAPPDATA%\FonPrebel\Logs6-11-06\execution.log` con líneas `2026-11-06 15:52:58 | INFO | Aplicación iniciada`, mientras `errors.log` no se creó porque no hubo errores, que es el comportamiento correcto. Hallazgo técnico: `Serilog.Sinks.File` 6.0.0 no admite la fecha en la ruta, así que la carpeta diaria exige un sink propio que reabre el archivo al cambiar el día (`DailyFileSink`). Se eliminó la carpeta temporal `%TEMP%\FonPrebel.Tests` que dejó el worker.
+
+L11 — 2026-11-06 — A3 implementado y verificado por el padre. Observado: `dotnet build FonPrebel.sln -v q` → "Compilación correcta"; `dotnet test FonPrebel.sln --nologo` → 37 superadas, 0 con error (26 previas intactas + 11 nuevas); arranque real → RUNNING_OK; base creada en `%LOCALAPPDATA%\FonPrebel\Database\FonPrebel.db` con `journal_mode = wal`, las 7 tablas de negocio más `__EFMigrationsHistory` y `sqlite_sequence`, y la migración `20261106210417_InitialCreate` aplicada; `errors.log` no se creó. Auditoría propia de la §2.7: el único texto SQL del código son dos sentencias `PRAGMA` en `SqlitePragmaInterceptor`, sin alternativa en `Microsoft.Data.Sqlite`; el `CHECK ("Id" = 1)` se declara con Fluent API, que es metadato de esquema y no consulta. Queda documentado como excepción única en `docs/diseno/01-arquitectura.md` §10.1. `AppConfiguration` quedó con 0 filas: la siembra de los dos valores que el spec confirma pasa a ser obligación explícita de A5, anotada en su fila de la tabla de tareas. Se eliminó el directorio temporal fuera del worktree que dejó el worker.

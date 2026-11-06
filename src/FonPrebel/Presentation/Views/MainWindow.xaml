@@ -1,0 +1,36 @@
+<ui:FluentWindow x:Class="FonPrebel.Presentation.Views.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Fon Prebel"
+                 Width="1180"
+                 Height="760"
+                 MinWidth="980"
+                 MinHeight="620"
+                 WindowStartupLocation="CenterScreen">
+    <!-- Dos columnas: la barra lateral de WPF-UI a la izquierda y el contenido de la sección a la derecha. -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <ui:NavigationView x:Name="Navigation"
+                           Grid.Column="0"
+                           PaneDisplayMode="Left"
+                           OpenPaneLength="250"
+                           IsBackButtonVisible="Collapsed" />
+
+        <Grid Grid.Column="1">
+            <!-- Marca de agua: el logo grande detrás del contenido, sin capturar el mouse. -->
+            <Image Source="/Assets/LogoFonprebelSinFondo.png"
+                   Opacity="0.06"
+                   Stretch="Uniform"
+                   IsHitTestVisible="False"
+                   Margin="48" />
+
+            <ContentControl Content="{Binding CurrentSection}"
+                            Margin="32,8,32,24" />
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

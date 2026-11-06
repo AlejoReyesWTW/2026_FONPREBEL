@@ -41,6 +41,18 @@ public enum CredentialReplaceOutcome
 
     /// <summary>No se pudo guardar: la credencial anterior quedó intacta.</summary>
     StorageFailed = 5,
+
+    /// <summary>
+    /// Ya hay una credencial guardada y utilizable: el alta no aplica porque no se crea ni se
+    /// sobrescribe nada; corresponde el reemplazo con la contraseña anterior (§3.2).
+    /// </summary>
+    AlreadyConfigured = 6,
+
+    /// <summary>
+    /// La credencial guardada se descifra en este perfil: el reingreso sin contraseña anterior no
+    /// aplica porque saltearía la comparación obligatoria (§3.2).
+    /// </summary>
+    PreviousPasswordRequired = 7,
 }
 
 /// <summary>Resultado de <see cref="IEmailCredentialService.TryReplaceAsync"/>.</summary>
@@ -52,9 +64,10 @@ public sealed record CredentialReplaceResult(CredentialReplaceOutcome Outcome)
 }
 
 /// <summary>
-/// S7 (§2.10.1): credencial de correo guardada cifrada con DPAPI. Sólo expone el estado y dos
-/// operaciones: comparar candidatamente la contraseña guardada y reemplazarla de forma atómica. La
-/// contraseña guardada nunca se devuelve ni se muestra.
+/// S7 (§2.10.1): credencial de correo guardada cifrada con DPAPI. Expone el estado y las tres
+/// operaciones que el §2.10 exige: registrar la primera credencial, reemplazarla con la contraseña
+/// anterior y reingresarla cuando la guardada no se descifra en este perfil de Windows. La contraseña
+/// guardada nunca se devuelve ni se muestra.
 /// </summary>
 public interface IEmailCredentialService
 {
@@ -87,6 +100,33 @@ public interface IEmailCredentialService
     /// </remarks>
     Task<CredentialReplaceResult> TryReplaceAsync(
         string previous,
+        string newSecret,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// §2.10.1: registra la primera credencial creando la fila única <c>Id = 1</c> con el secreto
+    /// cifrado y sus fechas. Sólo aplica cuando el estado es
+    /// <see cref="EmailCredentialState.NotConfigured"/>: con una credencial guardada no crea ni
+    /// sobrescribe nada y devuelve <see cref="CredentialReplaceOutcome.AlreadyConfigured"/> si se
+    /// puede descifrar, o <see cref="CredentialReplaceOutcome.NotRecoverable"/> si hay que
+    /// reingresarla. Pedir la contraseña dos veces es responsabilidad de la pantalla, no del servicio.
+    /// </summary>
+    /// <param name="newSecret">Contraseña nueva que se va a cifrar y guardar.</param>
+    Task<CredentialReplaceResult> TryRegisterAsync(
+        string newSecret,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// §2.10: reingresa la credencial cuando la guardada <b>no se puede descifrar</b> en este perfil de
+    /// Windows (cambió el usuario o el perfil). No hay contraseña anterior que comparar y eso es
+    /// válido. Sólo aplica con estado <see cref="EmailCredentialState.NotRecoverable"/>: con
+    /// <see cref="EmailCredentialState.Available"/> devuelve
+    /// <see cref="CredentialReplaceOutcome.PreviousPasswordRequired"/> y sin ningún secreto guardado
+    /// devuelve <see cref="CredentialReplaceOutcome.NotConfigured"/>. No borra filas ni toca otra
+    /// tabla, y deja la credencial anterior inservible.
+    /// </summary>
+    /// <param name="newSecret">Contraseña vigente que se va a cifrar y guardar.</param>
+    Task<CredentialReplaceResult> TryReenterAsync(
         string newSecret,
         CancellationToken cancellationToken = default);
 }

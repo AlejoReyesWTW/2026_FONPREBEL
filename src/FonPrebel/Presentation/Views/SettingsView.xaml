@@ -1,15 +1,359 @@
 <UserControl x:Class="FonPrebel.Presentation.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StackPanel>
-        <TextBlock Text="{Binding Title}"
-                   FontSize="26"
-                   FontWeight="SemiBold"
-                   TextWrapping="Wrap" />
-        <TextBlock Text="{Binding Description}"
-                   Margin="0,8,0,0"
-                   TextWrapping="Wrap"
-                   Opacity="0.7"
-                   MaxWidth="720" />
-    </StackPanel>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:config="clr-namespace:FonPrebel.Presentation.ViewModels.Config">
+    <UserControl.Resources>
+        <!-- Anexo E: etiqueta, campo, spinner de 12 px y mensaje concreto del parámetro. -->
+        <DataTemplate x:Key="ValidatedFieldTemplate" DataType="{x:Type config:ValidatedFieldViewModel}">
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Top">
+                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Hint}"
+                               FontSize="11"
+                               Opacity="0.6"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <Border BorderThickness="1" CornerRadius="4">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowsError}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#C42B1C" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ShowsSuccess}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#0F7B0F" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <ui:TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding IsEnabled}" />
+                    </Border>
+
+                    <TextBlock Text="{Binding Message}" FontSize="11" Margin="2,4,0,0" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Setter Property="Foreground" Value="#0F7B0F" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowsError}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Setter Property="Foreground" Value="#C42B1C" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <ui:ProgressRing Grid.Column="2"
+                                 Width="12"
+                                 Height="12"
+                                 Margin="8,0,0,0"
+                                 VerticalAlignment="Top"
+                                 IsIndeterminate="True">
+                    <ui:ProgressRing.Style>
+                        <Style TargetType="ui:ProgressRing">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsValidating}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:ProgressRing.Style>
+                </ui:ProgressRing>
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="SectionNote" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.65" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding Title}" FontSize="26" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Description}"
+                       Margin="0,8,0,0"
+                       TextWrapping="Wrap"
+                       Opacity="0.7"
+                       MaxWidth="720"
+                       HorizontalAlignment="Left" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Margin="0,16,0,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="880" HorizontalAlignment="Left">
+
+                <ui:InfoBar Margin="0,0,0,12"
+                            Severity="Error"
+                            IsClosable="False"
+                            Title="Base de datos no disponible"
+                            Message="{Binding StorageErrorText, Mode=OneWay}"
+                            IsOpen="{Binding HasStorageError, Mode=OneWay}" />
+
+                <!-- Correo: todos los valores están pendientes de confirmar con TI. -->
+                <ui:CardExpander Header="Correo" IsExpanded="True" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionNote}"
+                                   Text="Servidor, puerto, seguridad, remitente, cuenta y tiempo de espera. Ningún valor está confirmado todavía: los campos arrancan vacíos y el puerto es obligatorio siempre." />
+                        <ItemsControl ItemsSource="{Binding Email.Fields}"
+                                      ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    </StackPanel>
+                </ui:CardExpander>
+
+                <!-- Proxy: el interruptor decide si el texto se usa. -->
+                <ui:CardExpander Header="Proxy" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionNote}"
+                                   Text="El proxy no lleva usuario ni contraseña. Apagado, el campo de texto queda deshabilitado y vacío." />
+                        <ui:ToggleSwitch Content="Usar proxy"
+                                         Margin="0,0,0,14"
+                                         IsChecked="{Binding Proxy.IsProxyEnabled, UpdateSourceTrigger=PropertyChanged}" />
+                        <ItemsControl ItemsSource="{Binding Proxy.Fields}"
+                                      ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    </StackPanel>
+                </ui:CardExpander>
+
+                <!-- Rutas del servidor de archivos: las cuatro son obligatorias. -->
+                <ui:CardExpander Header="Rutas del servidor de archivos" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionNote}"
+                                   Text="Las rutas las entrega TI. Se comprueba que existan y, en las que la aplicación escribe, que tengan permiso de escritura." />
+                        <ItemsControl ItemsSource="{Binding Routes.Fields}"
+                                      ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    </StackPanel>
+                </ui:CardExpander>
+
+                <!-- Intervalos y concurrencia: sólo la verificación automática trae valor confirmado. -->
+                <ui:CardExpander Header="Intervalos y concurrencia" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionNote}"
+                                   Text="La verificación automática de conexiones corre cada 2 minutos. El umbral de conexión lenta y la cantidad de trabajadores están pendientes: se muestran vacíos." />
+                        <ItemsControl ItemsSource="{Binding Intervals.Fields}"
+                                      ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    </StackPanel>
+                </ui:CardExpander>
+
+                <!-- Credenciales: la contraseña guardada nunca se muestra ni se precarga. -->
+                <ui:CardExpander Header="Credenciales" Margin="0,0,0,12">
+                    <StackPanel>
+                        <ui:InfoBar Margin="0,0,0,10"
+                                    Severity="Error"
+                                    IsClosable="False"
+                                    Title="Credencial no disponible"
+                                    Message="{Binding Credentials.StatusMessage, Mode=OneWay}"
+                                    IsOpen="{Binding Credentials.HasStorageError, Mode=OneWay}" />
+
+                        <!-- §2.10: el perfil de Windows cambió y la credencial guardada no se descifra. -->
+                        <ui:InfoBar Margin="0,0,0,10"
+                                    Severity="Warning"
+                                    IsClosable="False"
+                                    Title="Credencial no recuperable en este perfil"
+                                    Message="{Binding Credentials.ReentryWarningText, Mode=OneWay}"
+                                    IsOpen="{Binding Credentials.ShowsNotRecoverableWarning, Mode=OneWay}" />
+
+                        <TextBlock Style="{StaticResource SectionNote}"
+                                   Text="{Binding Credentials.StateText}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Credentials.IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+
+                            <Grid>
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Credentials.RequiresPreviousPassword}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <ui:PasswordBox Width="320"
+                                                HorizontalAlignment="Left"
+                                                IsEnabled="False"
+                                                RevealButtonEnabled="False"
+                                                ToolTip="La contraseña guardada nunca se muestra."
+                                                Password="{Binding Credentials.StoredCredentialMask, Mode=OneWay}" />
+                            </Grid>
+                            <ui:Button Margin="8,0,0,0"
+                                       Content="{Binding Credentials.EditButtonText}"
+                                       ToolTip="Entrar en modo edición de la credencial"
+                                       Command="{Binding Credentials.BeginEditCommand}">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="Edit24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                        </StackPanel>
+
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Credentials.IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+
+                            <!-- Sólo con una credencial utilizable se pide la contraseña anterior (§3.2). -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Credentials.RequiresPreviousPassword}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="250" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Contraseña anterior" VerticalAlignment="Center" />
+                                <ui:PasswordBox Grid.Column="1"
+                                                Width="320"
+                                                HorizontalAlignment="Left"
+                                                RevealButtonEnabled="True"
+                                                Password="{Binding Credentials.PreviousPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="250" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Credentials.NewPasswordLabel}" VerticalAlignment="Center" />
+                                <ui:PasswordBox Grid.Column="1"
+                                                Width="320"
+                                                HorizontalAlignment="Left"
+                                                RevealButtonEnabled="True"
+                                                Password="{Binding Credentials.NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="250" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Credentials.ConfirmationLabel}" VerticalAlignment="Center" />
+                                <ui:PasswordBox Grid.Column="1"
+                                                Width="320"
+                                                HorizontalAlignment="Left"
+                                                RevealButtonEnabled="True"
+                                                Password="{Binding Credentials.ConfirmationPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <WrapPanel Margin="0,4,0,0">
+                                <ui:Button Content="{Binding Credentials.SaveButtonText}"
+                                           Appearance="Primary"
+                                           Command="{Binding Credentials.ReplaceCommand}" />
+                                <ui:Button Content="Cancelar"
+                                           Margin="8,0,0,0"
+                                           Appearance="Secondary"
+                                           Command="{Binding Credentials.CancelEditCommand}" />
+                                <ui:ProgressRing Width="16"
+                                                 Height="16"
+                                                 Margin="12,0,0,0"
+                                                 VerticalAlignment="Center"
+                                                 IsIndeterminate="True">
+                                    <ui:ProgressRing.Style>
+                                        <Style TargetType="ui:ProgressRing">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Credentials.IsBusy}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:ProgressRing.Style>
+                                </ui:ProgressRing>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Text="{Binding Credentials.StatusMessage}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#0F7B0F" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Credentials.HasStatusError}" Value="True">
+                                            <Setter Property="Foreground" Value="#C42B1C" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </ui:CardExpander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <WrapPanel Grid.Row="2" Margin="0,16,0,0" VerticalAlignment="Center">
+            <ui:Button Content="Guardar"
+                       Appearance="Primary"
+                       MinWidth="120"
+                       Command="{Binding SaveCommand}" />
+            <ui:ProgressRing Width="18"
+                             Height="18"
+                             Margin="12,0,0,0"
+                             VerticalAlignment="Center"
+                             IsIndeterminate="True">
+                <ui:ProgressRing.Style>
+                    <Style TargetType="ui:ProgressRing">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ui:ProgressRing.Style>
+            </ui:ProgressRing>
+            <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding StatusMessage}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="#0F7B0F" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasStatusError}" Value="True">
+                                <Setter Property="Foreground" Value="#C42B1C" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </WrapPanel>
+    </Grid>
 </UserControl>

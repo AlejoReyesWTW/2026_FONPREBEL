@@ -1,15 +1,42 @@
 <UserControl x:Class="FonPrebel.Presentation.Views.ExecutionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StackPanel>
-        <TextBlock Text="{Binding Title}"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Title}"
                    FontSize="26"
                    FontWeight="SemiBold"
                    TextWrapping="Wrap" />
-        <TextBlock Text="{Binding Description}"
+        <TextBlock Grid.Row="1"
+                   Text="{Binding Description}"
                    Margin="0,8,0,0"
                    TextWrapping="Wrap"
                    Opacity="0.7"
-                   MaxWidth="720" />
-    </StackPanel>
+                   MaxWidth="720"
+                   HorizontalAlignment="Left" />
+
+        <StackPanel Grid.Row="2" Margin="0,24,0,0" MaxWidth="760" HorizontalAlignment="Left">
+            <!-- A7 implementa el arranque del lote; por ahora el botón existe y sólo responde al gate. -->
+            <ui:Button Content="INICIAR"
+                       Appearance="Primary"
+                       MinWidth="150"
+                       HorizontalAlignment="Left"
+                       IsEnabled="{Binding CanStart}" />
+
+            <!-- Anexo D: aviso en tono suave amarillo/naranja mientras la configuración no esté completa. -->
+            <ui:InfoBar Margin="0,16,0,0"
+                        Severity="Warning"
+                        IsClosable="False"
+                        IsOpen="{Binding ShowsIncompleteConfigurationWarning, Mode=OneWay}"
+                        Title="Configuración incompleta"
+                        Message="{Binding IncompleteConfigurationWarningText, Mode=OneWay}" />
+        </StackPanel>
+    </Grid>
 </UserControl>

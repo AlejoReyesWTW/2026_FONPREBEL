@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using FonPrebel.Application.Interfaces;
 using FonPrebel.Infrastructure.Database;
 using FonPrebel.Infrastructure.FileStorage;
 using FonPrebel.Infrastructure.Logging;
@@ -39,6 +40,9 @@ public partial class App : System.Windows.Application
                 // S7: la credencial de correo se guarda cifrada con DPAPI y se descifra bajo demanda.
                 services.AddFonPrebelSecurity();
 
+                // S6: parámetros en SQLite y el gate que habilita el botón INICIAR (S18).
+                services.AddFonPrebelConfiguration();
+
                 services.AddSingleton<ExecutionViewModel>();
                 services.AddSingleton<HistoryViewModel>();
                 services.AddSingleton<LogsViewModel>();
@@ -72,6 +76,20 @@ public partial class App : System.Windows.Application
 
             return;
         }
+
+        // S6: se registran las claves del diseño de datos y se siembran sólo los dos valores que el
+        // spec confirma. Es idempotente: no duplica ni sobreescribe lo que el analista ya guardó.
+        IAppConfigurationStore configurationStore = _host.Services.GetRequiredService<IAppConfigurationStore>();
+        ConfigurationWriteResult seeded = await configurationStore.EnsureDefaultsAsync();
+        if (!seeded.Succeeded)
+        {
+            Log.Warning("No se pudieron sembrar los parámetros de configuración: {Outcome}", seeded.Outcome);
+        }
+
+        // S18: la configuración se lee y se valida antes de mostrar la ventana, para que el gate de
+        // INICIAR arranque con el estado real y no con un supuesto.
+        SettingsViewModel settings = _host.Services.GetRequiredService<SettingsViewModel>();
+        await settings.LoadAsync();
 
         MainWindow window = _host.Services.GetRequiredService<MainWindow>();
         window.Show();

@@ -10,15 +10,17 @@ using Microsoft.Extensions.Logging;
 namespace FonPrebel.Infrastructure.Security;
 
 /// <summary>
-/// S7 (§2.10.1): estado, comparación local y reemplazo atómico de la credencial de correo guardada en
-/// <c>EmailConfiguration</c>. Cada operación abre su propio contexto desde la factoría: los contextos
-/// son de vida corta y nunca se comparten entre hilos (S3).
+/// S7 (§2.10.1): estado, comparación local, alta de la primera credencial, reemplazo atómico y
+/// reingreso por cambio de perfil de la credencial de correo guardada en <c>EmailConfiguration</c>.
+/// Cada operación abre su propio contexto desde la factoría: los contextos son de vida corta y nunca
+/// se comparten entre hilos (S3).
 /// </summary>
 /// <remarks>
 /// La contraseña guardada nunca sale de esta clase: no se devuelve, no se muestra y no se registra. El
-/// único valor que viaja hacia afuera es el resultado tipado de cada operación.
+/// único valor que viaja hacia afuera es el resultado tipado de cada operación. El alta y el reingreso
+/// viven en <c>EmailCredentialService.Registration.cs</c> para respetar el límite de líneas de S2.
 /// </remarks>
-public sealed class EmailCredentialService : IEmailCredentialService
+public sealed partial class EmailCredentialService : IEmailCredentialService
 {
     /// <summary>La tabla admite una sola fila y la restricción <c>CHECK (Id = 1)</c> la fija en 1.</summary>
     private const int EmailConfigurationId = 1;
@@ -158,16 +160,12 @@ public sealed class EmailCredentialService : IEmailCredentialService
         configuration.PasswordUpdatedAtUtc = now;
         configuration.UpdatedAtUtc = now;
 
-        try
+        if (!await SaveAndCommitAsync(
+                context,
+                transaction,
+                "No se pudo guardar la credencial de correo: se conservó la anterior.",
+                cancellationToken).ConfigureAwait(false))
         {
-            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            // La transacción se descarta sin confirmar: la credencial anterior sigue guardada.
-            _logger.LogError(exception, "No se pudo guardar la credencial de correo: se conservó la anterior.");
-
             return new CredentialReplaceResult(CredentialReplaceOutcome.StorageFailed);
         }
 
@@ -223,6 +221,31 @@ public sealed class EmailCredentialService : IEmailCredentialService
         context.EmailConfigurations.SingleOrDefaultAsync(
             configuration => configuration.Id == EmailConfigurationId,
             cancellationToken);
+
+    /// <summary>
+    /// Confirma la escritura de la fila única dentro de la transacción abierta. Un fallo se registra sin
+    /// datos del secreto y deja la credencial anterior intacta, porque la transacción no se confirma.
+    /// </summary>
+    private async Task<bool> SaveAndCommitAsync(
+        AppDbContext context,
+        IDbContextTransaction transaction,
+        string failureMessage,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogError(exception, "{Message}", failureMessage);
+
+            return false;
+        }
+    }
 
     private EmailCredentialState ReadState(EmailConfiguration? configuration)
     {

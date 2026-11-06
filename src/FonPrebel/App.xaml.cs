@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Threading;
 using FonPrebel.Application.Interfaces;
+using FonPrebel.Application.Services;
 using FonPrebel.Infrastructure.Database;
+using FonPrebel.Infrastructure.Email;
 using FonPrebel.Infrastructure.FileStorage;
 using FonPrebel.Infrastructure.Logging;
 using FonPrebel.Infrastructure.Security;
@@ -42,6 +44,22 @@ public partial class App : System.Windows.Application
 
                 // S6: parámetros en SQLite y el gate que habilita el botón INICIAR (S18).
                 services.AddFonPrebelConfiguration();
+
+                // §2.14: las dos sondas de conexión y su rechequeo automático en segundo plano. El
+                // monitor es un IHostedService y arranca con el host, después de las migraciones; cada
+                // ciclo vuelve a leer la configuración guardada, así que nunca afirma una conexión que
+                // no haya comprobado.
+                services.AddSingleton<IConnectionProbe, FileServerConnectionProbe>();
+                services.AddSingleton<IConnectionProbe>(provider => new EmailConnectionProbe(
+                    provider.GetRequiredService<IEmailSettingsStore>(),
+
+                    // Punto de extensión sin implementación: el protocolo del banco sigue pendiente
+                    // (§2.10, §5.2). Con esto la sonda de correo informa "sin comprobar", nunca verde.
+                    connectionCheck: null));
+                services.AddSingleton<IConnectionMonitorDelay, SystemConnectionMonitorDelay>();
+                services.AddSingleton<ConnectionMonitor>();
+                services.AddSingleton<IConnectionMonitor>(provider => provider.GetRequiredService<ConnectionMonitor>());
+                services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<ConnectionMonitor>());
 
                 services.AddSingleton<ExecutionViewModel>();
                 services.AddSingleton<HistoryViewModel>();

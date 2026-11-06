@@ -2,7 +2,10 @@ using System.Windows.Controls;
 
 namespace FonPrebel.Presentation.Views;
 
-/// <summary>Marcador de posición de la sección: sólo muestra el título y la descripción del ViewModel.</summary>
+/// <summary>
+/// Vista de la sección Conexiones (V6, §2.14). Sólo presenta el estado que publica el ViewModel: no
+/// comprueba conexiones ni decide colores por su cuenta.
+/// </summary>
 public partial class ConnectionsView : UserControl
 {
     public ConnectionsView()

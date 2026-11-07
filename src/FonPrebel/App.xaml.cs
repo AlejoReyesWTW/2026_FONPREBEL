@@ -45,6 +45,11 @@ public partial class App : System.Windows.Application
                 // S6: parámetros en SQLite y el gate que habilita el botón INICIAR (S18).
                 services.AddFonPrebelConfiguration();
 
+                // S8 y S20: lotes, ejecuciones, destinatarios y reanudación con huellas. La sección de
+                // Historial y el cableado en pantalla llegan en la unidad siguiente; acá queda el dominio y
+                // la persistencia registrados en el contenedor.
+                services.AddFonPrebelBatches();
+
                 // §2.14: las dos sondas de conexión y su rechequeo automático en segundo plano. El
                 // monitor es un IHostedService y arranca con el host, después de las migraciones; cada
                 // ciclo vuelve a leer la configuración guardada, así que nunca afirma una conexión que

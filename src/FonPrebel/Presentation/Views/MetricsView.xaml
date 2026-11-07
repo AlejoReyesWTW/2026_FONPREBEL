@@ -1,15 +1,197 @@
 <UserControl x:Class="FonPrebel.Presentation.Views.MetricsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StackPanel>
-        <TextBlock Text="{Binding Title}"
-                   FontSize="26"
-                   FontWeight="SemiBold"
-                   TextWrapping="Wrap" />
-        <TextBlock Text="{Binding Description}"
-                   Margin="0,8,0,0"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:metrics="clr-namespace:FonPrebel.Presentation.ViewModels.Metrics">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+
+        <!-- Una línea de detalle de una tarjeta: etiqueta a la izquierda y su contador a la derecha. -->
+        <DataTemplate x:Key="MetricDetailTemplate" DataType="{x:Type metrics:MetricDetail}">
+            <Grid Margin="0,3,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Label}"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           Opacity="0.8" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Value}"
+                           Margin="10,0,0,0"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           TextAlignment="Right"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Top" />
+            </Grid>
+        </DataTemplate>
+
+        <!--
+            Tarjeta del tablero: ícono y etiqueta arriba, número grande y, abajo, los contadores de detalle.
+            El ancho fijo, el alto mínimo y el texto con ajuste de línea evitan que la grilla se rompa en
+            ventana angosta; las tarjetas se alinean arriba para que la fila no quede escalonada.
+        -->
+        <DataTemplate x:Key="MetricCardTemplate" DataType="{x:Type metrics:MetricCard}">
+            <ui:Card Width="244" MinHeight="200" Margin="0,0,12,12" Padding="16" VerticalAlignment="Top">
+                <StackPanel>
+                    <DockPanel LastChildFill="True">
+                        <ui:SymbolIcon DockPanel.Dock="Left"
+                                       Symbol="{Binding Icon}"
+                                       FontSize="18"
+                                       VerticalAlignment="Center"
+                                       Opacity="0.8" />
+                        <TextBlock Text="{Binding Title}"
+                                   Margin="10,0,0,0"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.75"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <TextBlock Text="{Binding Value}"
+                               Margin="0,12,0,0"
+                               FontSize="26"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock Text="{Binding Caption}"
+                               Margin="0,2,0,0"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Opacity="0.75">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPending}" Value="True">
+                                        <Setter Property="Foreground" Value="#9D5D00" />
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                        <Setter Property="Opacity" Value="1" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <ItemsControl Margin="0,10,0,0"
+                                  ItemsSource="{Binding Details}"
+                                  ItemTemplate="{StaticResource MetricDetailTemplate}" />
+
+                    <TextBlock Text="{Binding Note}"
+                               Margin="0,8,0,0"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Opacity="0.7">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Note}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </ui:Card>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding Title}"
+                       FontSize="26"
+                       FontWeight="SemiBold"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Description}"
+                       Margin="0,8,0,0"
+                       TextWrapping="Wrap"
+                       Opacity="0.7"
+                       MaxWidth="720"
+                       HorizontalAlignment="Left" />
+        </StackPanel>
+
+        <!-- Barra superior: alcance del tablero, refresco y estado de la última lectura. -->
+        <WrapPanel Grid.Row="1" Margin="0,16,0,12" Orientation="Horizontal">
+            <TextBlock Text="Lote:"
+                       VerticalAlignment="Center"
+                       Opacity="0.7" />
+            <ComboBox Width="280"
+                      Margin="6,0,16,0"
+                      VerticalAlignment="Center"
+                      ItemsSource="{Binding BatchOptions}"
+                      DisplayMemberPath="Display"
+                      SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                      AutomationProperties.Name="Lote por el que se filtran los indicadores" />
+            <ui:Button Content="Actualizar"
+                       Command="{Binding RefreshCommand}"
+                       Appearance="Secondary"
+                       VerticalAlignment="Center" />
+            <ui:ProgressRing IsIndeterminate="True"
+                             Width="18"
+                             Height="18"
+                             Margin="12,0,0,0"
+                             VerticalAlignment="Center"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibility}}" />
+            <TextBlock Text="{Binding LastRefreshText}"
+                       Margin="12,0,0,0"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"
+                       Opacity="0.65" />
+        </WrapPanel>
+
+        <!-- Leyenda del estado vacío: explica por qué los contadores están en cero. -->
+        <Border Grid.Row="2"
+                Margin="0,0,0,12"
+                Padding="12,8"
+                CornerRadius="4"
+                Background="#0F000000"
+                Visibility="{Binding HasNotice, Converter={StaticResource BooleanToVisibility}}">
+            <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="Info24"
+                               FontSize="16"
+                               Margin="0,0,8,0"
+                               VerticalAlignment="Center"
+                               Opacity="0.75" />
+                <TextBlock Text="{Binding NoticeText}"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"
+                           MaxWidth="760" />
+            </StackPanel>
+        </Border>
+
+        <!-- Lectura parcial: se dice cuántos lotes no se pudieron leer y no se presenta una suma falsa. -->
+        <TextBlock Grid.Row="3"
+                   Text="{Binding ReadErrorText}"
+                   Margin="0,0,0,12"
                    TextWrapping="Wrap"
-                   Opacity="0.7"
-                   MaxWidth="720" />
-    </StackPanel>
+                   Foreground="#C42B1C"
+                   Visibility="{Binding HasReadError, Converter={StaticResource BooleanToVisibility}}" />
+
+        <ScrollViewer Grid.Row="4"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Cards}"
+                          ItemTemplate="{StaticResource MetricCardTemplate}"
+                          HorizontalAlignment="Left">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

@@ -8,20 +8,67 @@
                  MinWidth="980"
                  MinHeight="620"
                  WindowStartupLocation="CenterScreen">
-    <!-- Dos columnas: la barra lateral de WPF-UI a la izquierda y el contenido de la sección a la derecha. -->
+    <!--
+        La barra de título cruza toda la ventana y es la superficie de arrastre: arrastrar la mueve,
+        doble clic maximiza y restaura, y sus botones minimizan, maximizan y cierran. Los dos controles
+        propios (modo compacto siempre en primer plano, S24, y tema claro/oscuro, §2.20) viven en su
+        extremo derecho, dentro de TrailingContent, así que no le quitan superficie de arrastre.
+        Abajo, la barra lateral de WPF-UI a la izquierda y la sección activa a la derecha.
+    -->
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
+        <ui:TitleBar Grid.Row="0"
+                     Grid.Column="0"
+                     Grid.ColumnSpan="2"
+                     Title="Fon Prebel"
+                     ShowMinimize="True"
+                     ShowMaximize="True"
+                     ShowClose="True"
+                     CanMaximize="True">
+            <ui:TitleBar.TrailingContent>
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button x:Name="CompactModeButton"
+                               Appearance="Secondary"
+                               Click="OnCompactModeToggled"
+                               ToolTip="Modo compacto siempre en primer plano"
+                               AutomationProperties.Name="Modo compacto siempre en primer plano"
+                               WindowChrome.IsHitTestVisibleInChrome="True">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon x:Name="CompactModeIcon" Symbol="Pin24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+
+                    <ui:Button x:Name="ThemeToggleButton"
+                               Appearance="Secondary"
+                               Margin="8,0,8,0"
+                               Click="OnThemeToggleClicked"
+                               ToolTip="Cambiar a tema oscuro"
+                               AutomationProperties.Name="Cambiar a tema oscuro"
+                               WindowChrome.IsHitTestVisibleInChrome="True">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon x:Name="ThemeModeIcon" Symbol="WeatherMoon24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+                </StackPanel>
+            </ui:TitleBar.TrailingContent>
+        </ui:TitleBar>
+
         <ui:NavigationView x:Name="Navigation"
+                           Grid.Row="1"
                            Grid.Column="0"
                            PaneDisplayMode="Left"
                            OpenPaneLength="250"
                            IsBackButtonVisible="Collapsed" />
 
-        <Grid Grid.Column="1">
+        <Grid Grid.Row="1" Grid.Column="1">
             <!-- Marca de agua: el logo grande detrás del contenido, sin capturar el mouse. -->
             <Image Source="/Assets/LogoFonprebelSinFondo.png"
                    Opacity="0.06"

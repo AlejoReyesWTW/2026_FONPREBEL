@@ -1,38 +1,17 @@
 <Application x:Class="FonPrebel.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:views="clr-namespace:FonPrebel.Presentation.Views"
-             xmlns:viewModels="clr-namespace:FonPrebel.Presentation.ViewModels">
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
-            </ResourceDictionary.MergedDictionaries>
 
-            <!-- Cada ViewModel de sección se muestra con su vista. La vista recibe el ViewModel como DataContext. -->
-            <DataTemplate DataType="{x:Type viewModels:ExecutionViewModel}">
-                <views:ExecutionView />
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type viewModels:HistoryViewModel}">
-                <views:HistoryView />
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type viewModels:LogsViewModel}">
-                <views:LogsView />
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type viewModels:SettingsViewModel}">
-                <views:SettingsView />
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type viewModels:MetricsViewModel}">
-                <views:MetricsView />
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type viewModels:ConnectionsViewModel}">
-                <views:ConnectionsView />
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type viewModels:LoginViewModel}">
-                <views:LoginView />
-            </DataTemplate>
+                <!-- S16: la sección activa se muestra con su vista. Las plantillas están en un diccionario
+                     propio para que se puedan cargar y verificar sin levantar toda la aplicación. -->
+                <ResourceDictionary Source="Presentation/Resources/ViewTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,0 +1,63 @@
+<UserControl x:Class="FonPrebel.Presentation.Views.Shared.PhaseStepIndicator"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <!--
+        §2.18: indicador de las cinco fases, con una bolita por fase. La activa muestra el anillo girando,
+        las completadas van llenas y las pendientes quedan vacías. Los cinco pasos se envuelven cuando la
+        ventana es angosta (modo compacto) en lugar de encimarse.
+    -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+    </UserControl.Resources>
+
+    <ItemsControl ItemsSource="{Binding Phases}" HorizontalAlignment="Center">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <StackPanel Width="140" Margin="2,0,2,10" ToolTip="{Binding StatusName}">
+                    <Grid Width="44" Height="44" HorizontalAlignment="Center">
+                        <Ellipse Width="44"
+                                 Height="44"
+                                 Fill="{Binding DotFill}"
+                                 Stroke="{Binding DotStroke}"
+                                 StrokeThickness="2" />
+
+                        <TextBlock Text="{Binding NumberText}"
+                                   FontSize="17"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="{Binding NumberForeground}"
+                                   Visibility="{Binding ShowsNumber, Converter={StaticResource BooleanToVisibility}}" />
+
+                        <ui:ProgressRing Width="34"
+                                         Height="34"
+                                         IsIndeterminate="True"
+                                         Foreground="{Binding StatusColor}"
+                                         Visibility="{Binding ShowsSpinner, Converter={StaticResource BooleanToVisibility}}" />
+                    </Grid>
+
+                    <TextBlock Text="{Binding Label}"
+                               Margin="0,8,0,0"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center" />
+
+                    <TextBlock Text="{Binding StatusLabel}"
+                               Margin="0,4,0,0"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Foreground="{Binding StatusColor}" />
+                </StackPanel>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

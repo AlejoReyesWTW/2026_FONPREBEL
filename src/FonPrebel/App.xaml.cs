@@ -13,6 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
+// El cableado de la ventana (barra lateral, tema y modo compacto) se verifica con pruebas de interfaz que
+// viven en el proyecto de pruebas; el código sigue siendo interno, no parte de la API de la aplicación.
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("FonPrebel.Tests")]
+
 namespace FonPrebel;
 
 /// <summary>

@@ -1,0 +1,180 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                    xmlns:layout="clr-namespace:FonPrebel.Presentation.Views.Layout">
+    <!--
+        S25: patrón único de distribución. Este diccionario define el contenedor de página y las medidas de
+        tipografía y separación que comparten todas las vistas, para que ninguna copie números sueltos.
+        Cada vista lo mezcla en sus propios recursos, porque los recursos de la aplicación los administra
+        otra unidad.
+
+        Criterios, en un solo lugar:
+        - ancho máximo del contenido: el que declare cada vista (960 formularios, 1100 tarjetas, 1200 paneles).
+        - relleno lateral: 32 por omisión; 40 en las vistas de paneles que se leen de borde a borde.
+        - separación entre bloques: 16 (SpacedStackPanel).
+        - separación entre columnas y ancho en que se apilan: 16 y 720 (ResponsiveColumnsPanel).
+        - columna de etiquetas de los formularios: 240 fijos, campo a la derecha con todo el resto.
+    -->
+
+    <Style x:Key="PageTitleText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="PageSubtitleText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- Título de una sección o tarjeta. -->
+    <Style x:Key="PageSectionTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+
+    <!-- Frase que explica qué contiene la sección, siempre debajo de su título. -->
+    <Style x:Key="PageSectionNote" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Opacity" Value="0.65" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,0,0,14" />
+    </Style>
+
+    <!-- Etiqueta de un campo: vive en la columna fija de 240 para que todas las filas queden alineadas. -->
+    <Style x:Key="PageFormLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PageFormHint" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Opacity" Value="0.6" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+
+    <!--
+        Mensaje de validación debajo de su campo. Reserva 16 píxeles de alto siempre: así el mensaje no
+        corre las filas siguientes ni desalinea la columna de etiquetas cuando aparece.
+    -->
+    <Style x:Key="PageFormMessage" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MinHeight" Value="16" />
+        <Setter Property="Margin" Value="2,4,0,0" />
+    </Style>
+
+    <!-- Fila de formulario: etiqueta fija a la izquierda, campo a la derecha con el resto del ancho. -->
+    <Style x:Key="PageFormRow" TargetType="{x:Type layout:ResponsiveColumnsPanel}">
+        <Setter Property="ColumnPattern" Value="240,*" />
+        <Setter Property="Spacing" Value="16" />
+        <Setter Property="StackThreshold" Value="560" />
+        <Setter Property="Margin" Value="0,0,0,14" />
+    </Style>
+
+    <!-- Grupos de botones: siempre agrupados y alineados a la derecha de su bloque. -->
+    <Style x:Key="PageActionRow" TargetType="StackPanel">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="Margin" Value="0,4,0,0" />
+    </Style>
+
+    <Style x:Key="PageEmptyTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,16,0,0" />
+    </Style>
+
+    <Style x:Key="PageEmptyText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="MaxWidth" Value="520" />
+        <Setter Property="Margin" Value="0,10,0,0" />
+    </Style>
+
+    <!--
+        Contenedor de página. Tres regiones dentro de la misma columna centrada: encabezado fijo, cuerpo
+        desplazable en vertical y pie fijo. El cuerpo no desplaza en horizontal a propósito: así se mide con
+        el ancho real de la ventana y los paneles que reparten el ancho pueden apilarse cuando no alcanza.
+        El alto mínimo del cuerpo es el de la ventana visible, para que las vistas de paneles llenen la
+        pantalla sin dejar una franja muerta abajo; si el contenido crece, aparece la barra vertical.
+        El relleno vertical del patrón es 0: el alto mínimo depende de ello, y la separación entre bloques la
+        da SpacedStackPanel.
+    -->
+    <Style TargetType="{x:Type layout:PageLayout}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="ContentMaxWidth" Value="960" />
+        <Setter Property="PagePadding" Value="32,0,32,0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type layout:PageLayout}">
+                    <!--
+                        Una sola columna centrada de ancho máximo: las tres regiones comparten esta caja, así el
+                        encabezado, el cuerpo y el pie arrancan en la misma coordenada y no queda el título
+                        centrado sobre un cuerpo alineado a la izquierda.
+                    -->
+                    <Grid Background="Transparent"
+                          MaxWidth="{TemplateBinding ContentMaxWidth}"
+                          HorizontalAlignment="Stretch">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border x:Name="HeaderRegion"
+                                Grid.Row="0"
+                                Margin="{TemplateBinding PagePadding}"
+                                Padding="0,0,0,20">
+                            <layout:SpacedStackPanel Spacing="8">
+                                <TextBlock Style="{StaticResource PageTitleText}"
+                                           Text="{TemplateBinding HeaderTitle}" />
+                                <TextBlock Style="{StaticResource PageSubtitleText}"
+                                           Text="{TemplateBinding HeaderSubtitle}" />
+                            </layout:SpacedStackPanel>
+                        </Border>
+
+                        <ScrollViewer x:Name="BodyScroll"
+                                      Grid.Row="1"
+                                      Focusable="False"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <Border MinHeight="{Binding ViewportHeight, ElementName=BodyScroll}"
+                                    Margin="{TemplateBinding PagePadding}">
+                                <ContentPresenter />
+                            </Border>
+                        </ScrollViewer>
+
+                        <Border x:Name="FooterRegion"
+                                Grid.Row="2"
+                                Margin="{TemplateBinding PagePadding}"
+                                Padding="0,16,0,0">
+                            <ContentPresenter Content="{TemplateBinding Footer}" />
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- Fill: el cuerpo se mide con el alto visible y no se desplaza; sus filas reparten. -->
+                        <Trigger Property="BodyMode" Value="Fill">
+                            <Setter TargetName="BodyScroll" Property="VerticalScrollBarVisibility" Value="Disabled" />
+                        </Trigger>
+                        <Trigger Property="HeaderTitle" Value="{x:Null}">
+                            <Setter TargetName="HeaderRegion" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Footer" Value="{x:Null}">
+                            <Setter TargetName="FooterRegion" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

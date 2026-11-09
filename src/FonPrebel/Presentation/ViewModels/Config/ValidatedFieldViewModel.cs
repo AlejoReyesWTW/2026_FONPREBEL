@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FonPrebel.Application.Validation;
 
 namespace FonPrebel.Presentation.ViewModels.Config;
@@ -21,6 +22,9 @@ public sealed partial class ValidatedFieldViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isEnabled;
+
+    [ObservableProperty]
+    private bool _isEditing;
 
     [ObservableProperty]
     private bool _isValidating;
@@ -70,6 +74,46 @@ public sealed partial class ValidatedFieldViewModel : ObservableObject
     /// <summary>Resultado de la última validación terminada.</summary>
     public ValidationResult LastResult { get; private set; } = ValidationResult.Valid;
 
+    /// <summary>Valor con el que el campo quedó almacenado en la base (§2.9.2 r10).</summary>
+    public string StoredValue { get; private set; } = string.Empty;
+
+    /// <summary>§2.9.2 r10: indica si el valor difiere del almacenado.</summary>
+    public bool HasValueChanged => !string.Equals(Value, StoredValue, StringComparison.Ordinal);
+
+    /// <summary>§2.9.2 r14: mientras no se habilite el lápiz, el campo se muestra en sólo lectura.</summary>
+    public bool IsReadOnly => !IsEditing;
+
+    /// <summary>§2.9.2 r14: el lápiz sólo está disponible en los campos habilitados y fuera de edición.</summary>
+    public bool CanBeginEdit => IsEnabled && !IsEditing;
+
+    /// <summary>§2.9.2 r14: habilita la edición de este campo y sólo de este.</summary>
+    [RelayCommand]
+    private void BeginEdit()
+    {
+        if (!CanBeginEdit)
+        {
+            return;
+        }
+
+        IsEditing = true;
+    }
+
+    /// <summary>§2.9.2 r14: cancela la edición y devuelve el valor almacenado.</summary>
+    [RelayCommand]
+    private void CancelEdit()
+    {
+        Value = StoredValue;
+        IsEditing = false;
+    }
+
+    /// <summary>Fija el valor almacenado tras cargar o guardar y deja el campo en sólo lectura.</summary>
+    public void AcceptStoredValue()
+    {
+        StoredValue = Value;
+        IsEditing = false;
+        OnPropertyChanged(nameof(HasValueChanged));
+    }
+
     /// <summary>Indica si el campo muestra el borde y el mensaje del Anexo E.</summary>
     public bool ShowsError => HasIndicator && !IsValid;
 
@@ -114,8 +158,17 @@ public sealed partial class ValidatedFieldViewModel : ObservableObject
     partial void OnValueChanged(string value)
     {
         IsValid = false;
+        OnPropertyChanged(nameof(HasValueChanged));
         PendingValidation = RevalidateAsync();
     }
+
+    partial void OnIsEditingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsReadOnly));
+        OnPropertyChanged(nameof(CanBeginEdit));
+    }
+
+    partial void OnIsEnabledChanged(bool value) => OnPropertyChanged(nameof(CanBeginEdit));
 
     partial void OnIsValidChanged(bool value) => OnPropertyChanged(nameof(ShowsError));
 

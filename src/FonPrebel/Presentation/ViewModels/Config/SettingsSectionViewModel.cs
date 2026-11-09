@@ -22,6 +22,15 @@ public abstract class SettingsSectionViewModel : ObservableObject
     /// <summary>Indica si todos los campos de la sección están validados y son válidos.</summary>
     public bool IsValid => _fields.All(field => field.IsValid && !field.IsValidating);
 
+    /// <summary>Fija los valores almacenados tras cargar o guardar y deja los campos en sólo lectura.</summary>
+    public virtual void AcceptStoredValues()
+    {
+        foreach (ValidatedFieldViewModel field in _fields)
+        {
+            field.AcceptStoredValue();
+        }
+    }
+
     /// <summary>Carga los valores guardados; devuelve el motivo si el almacén no responde.</summary>
     public abstract Task<ConfigurationStoreOutcome> LoadAsync(CancellationToken cancellationToken = default);
 

@@ -7,6 +7,7 @@ using FonPrebel.Infrastructure.Email;
 using FonPrebel.Infrastructure.FileStorage;
 using FonPrebel.Infrastructure.Logging;
 using FonPrebel.Infrastructure.Security;
+using FonPrebel.Presentation.Dialogs;
 using FonPrebel.Presentation.ViewModels;
 using FonPrebel.Presentation.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,6 +70,10 @@ public partial class App : System.Windows.Application
                 services.AddSingleton<ConnectionMonitor>();
                 services.AddSingleton<IConnectionMonitor>(provider => provider.GetRequiredService<ConnectionMonitor>());
                 services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<ConnectionMonitor>());
+
+                // §2.9.2 r12: la pantalla Configuración necesita un aviso modal antes de persistir una
+                // configuración incompleta. El contrato vive en Application y la implementación con WPF acá.
+                services.AddSingleton<IConfirmationDialog, MessageBoxConfirmationDialog>();
 
                 services.AddSingleton<ExecutionViewModel>();
                 services.AddSingleton<HistoryViewModel>();

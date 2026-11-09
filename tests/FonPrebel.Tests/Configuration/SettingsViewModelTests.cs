@@ -167,6 +167,7 @@ public sealed class SettingsViewModelTests
                 NullLogger<EmailCredentialService>.Instance),
             gate,
             new FakeConnectionMonitor(),
+            new FakeConfirmationDialog(),
             NullLogger<SettingsViewModel>.Instance);
 
         await settings.LoadAsync();

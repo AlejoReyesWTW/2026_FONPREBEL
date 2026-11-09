@@ -12,6 +12,8 @@ public sealed partial class ProxySettingsViewModel : SettingsSectionViewModel
 {
     private readonly IAppConfigurationStore _configurationStore;
 
+    private bool _storedIsProxyEnabled;
+
     [ObservableProperty]
     private bool _isProxyEnabled;
 
@@ -30,6 +32,18 @@ public sealed partial class ProxySettingsViewModel : SettingsSectionViewModel
 
     /// <summary>Texto del proxy.</summary>
     public ValidatedFieldViewModel ProxyText { get; }
+
+    /// <summary>§2.9.2 r10: el interruptor del proxy también cuenta como cambio.</summary>
+    public bool HasProxyChanged => IsProxyEnabled != _storedIsProxyEnabled;
+
+    /// <summary>Fija el valor almacenado del interruptor y el de sus campos.</summary>
+    public override void AcceptStoredValues()
+    {
+        base.AcceptStoredValues();
+
+        _storedIsProxyEnabled = IsProxyEnabled;
+        OnPropertyChanged(nameof(HasProxyChanged));
+    }
 
     public override async Task<ConfigurationStoreOutcome> LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -78,6 +92,7 @@ public sealed partial class ProxySettingsViewModel : SettingsSectionViewModel
     partial void OnIsProxyEnabledChanged(bool value)
     {
         ProxyText.IsEnabled = value;
+        OnPropertyChanged(nameof(HasProxyChanged));
 
         if (!value)
         {

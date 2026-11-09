@@ -10,7 +10,58 @@
                 <ResourceDictionary Source="/FonPrebel;component/Presentation/Views/Layout/PageLayout.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Anexo E: etiqueta, campo, spinner de 12 px y mensaje concreto del parámetro. -->
+            <!-- §2.9.2 r14: el lápiz y la cancelación de la edición se muestran según el estado del campo. -->
+            <BooleanToVisibilityConverter x:Key="FieldStateToVisibility" />
+
+            <!-- Anexo E y §2.9.2 r15: el spinner del campo sólo se ve mientras ese campo valida. -->
+            <Style x:Key="FieldProgressRing" TargetType="ui:ProgressRing">
+                <Setter Property="Width" Value="12" />
+                <Setter Property="Height" Value="12" />
+                <Setter Property="Margin" Value="0,0,12,0" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsIndeterminate" Value="True" />
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsValidating}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Indicador de trabajo en curso de la sección; sólo se ve mientras la pantalla está ocupada. -->
+            <Style x:Key="BusyProgressRing" TargetType="ui:ProgressRing">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsIndeterminate" Value="True" />
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Indicador de la credencial: se guía por el trabajo en curso de su propio bloque. -->
+            <Style x:Key="CredentialProgressRing" TargetType="ui:ProgressRing">
+                <Setter Property="Width" Value="16" />
+                <Setter Property="Height" Value="16" />
+                <Setter Property="Margin" Value="12,0,0,0" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsIndeterminate" Value="True" />
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Credentials.IsBusy}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!--
+                Anexo E: etiqueta, campo, spinner de 12 px y mensaje concreto del parámetro.
+                §2.9.2 r14: el campo se muestra en sólo lectura y el lápiz habilita su edición; mientras
+                edita aparecen las acciones de cancelar.
+                §2.9.2 r15: el indicador de progreso va dentro del propio campo mientras comprueba la ruta.
+            -->
             <DataTemplate x:Key="ValidatedFieldTemplate" DataType="{x:Type config:ValidatedFieldViewModel}">
                 <layout:ResponsiveColumnsPanel Style="{StaticResource PageFormRow}">
                     <StackPanel VerticalAlignment="Center">
@@ -39,8 +90,15 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
-                                <ui:TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                            IsEnabled="{Binding IsEnabled}" />
+
+                                <!-- El spinner vive dentro del campo, sobre el borde que marca su estado. -->
+                                <Grid>
+                                    <ui:TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                IsEnabled="{Binding IsEnabled}"
+                                                IsReadOnly="{Binding IsReadOnly, Mode=OneWay}" />
+
+                                    <ui:ProgressRing Style="{StaticResource FieldProgressRing}" />
+                                </Grid>
                             </Border>
 
                             <TextBlock Text="{Binding Message}">
@@ -59,23 +117,21 @@
                             </TextBlock>
                         </StackPanel>
 
-                        <ui:ProgressRing Grid.Column="1"
-                                         Width="12"
-                                         Height="12"
-                                         Margin="8,6,0,0"
-                                         VerticalAlignment="Top"
-                                         IsIndeterminate="True">
-                            <ui:ProgressRing.Style>
-                                <Style TargetType="ui:ProgressRing">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsValidating}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ui:ProgressRing.Style>
-                        </ui:ProgressRing>
+                        <!-- §2.9.2 r14: el lápiz habilita la edición de este campo y sólo de este. -->
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" Orientation="Horizontal">
+                            <ui:Button ToolTip="Editar este campo"
+                                       Command="{Binding BeginEditCommand}"
+                                       Visibility="{Binding CanBeginEdit, Converter={StaticResource FieldStateToVisibility}}">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="Edit24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+
+                            <ui:Button Content="Cancelar"
+                                       ToolTip="Volver al valor guardado"
+                                       Command="{Binding CancelEditCommand}"
+                                       Visibility="{Binding IsEditing, Converter={StaticResource FieldStateToVisibility}}" />
+                        </StackPanel>
                     </Grid>
                 </layout:ResponsiveColumnsPanel>
             </DataTemplate>
@@ -127,21 +183,14 @@
                         </Style>
                     </StackPanel.Style>
 
-                    <TextBlock VerticalAlignment="Center"
-                               Style="{StaticResource StatusText}"
+                    <TextBlock VerticalAlignment="Center" Style="{StaticResource StatusText}"
                                Text="{Binding ConnectionOfferMessage}" />
 
-                    <ui:Button Margin="12,0,0,0"
-                               Content="Comprobar ahora"
-                               Command="{Binding OfferConnectionTestCommand}" />
-                    <ui:Button Margin="8,0,0,0"
-                               Content="Ahora no"
-                               Command="{Binding DismissConnectionOfferCommand}" />
+                    <ui:Button Margin="12,0,0,0" Content="Comprobar ahora" Command="{Binding OfferConnectionTestCommand}" />
+                    <ui:Button Margin="8,0,0,0" Content="Ahora no" Command="{Binding DismissConnectionOfferCommand}" />
                 </StackPanel>
 
-                <TextBlock Margin="0,0,0,12"
-                           TextWrapping="Wrap"
-                           Text="{Binding ConnectionOfferResultText}">
+                <TextBlock Margin="0,0,0,12" TextWrapping="Wrap" Text="{Binding ConnectionOfferResultText}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource StatusText}">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -167,25 +216,8 @@
                                Text="{Binding StatusMessage}" />
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <ui:ProgressRing Width="18"
-                                         Height="18"
-                                         VerticalAlignment="Center"
-                                         IsIndeterminate="True">
-                            <ui:ProgressRing.Style>
-                                <Style TargetType="ui:ProgressRing">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ui:ProgressRing.Style>
-                        </ui:ProgressRing>
-                        <ui:Button Margin="12,0,0,0"
-                                   Content="Guardar"
-                                   Appearance="Primary"
-                                   MinWidth="120"
+                        <ui:ProgressRing Width="18" Height="18" Style="{StaticResource BusyProgressRing}" />
+                        <ui:Button Margin="12,0,0,0" Content="Guardar" Appearance="Primary" MinWidth="120"
                                    Command="{Binding SaveCommand}" />
                     </StackPanel>
                 </Grid>
@@ -250,20 +282,14 @@
             <ui:Card Padding="20">
                 <StackPanel>
                     <TextBlock Style="{StaticResource PageSectionTitle}" Text="Credenciales" />
-                    <TextBlock Style="{StaticResource PageSectionNote}"
-                               Text="{Binding Credentials.StateText}" />
+                    <TextBlock Style="{StaticResource PageSectionNote}" Text="{Binding Credentials.StateText}" />
 
-                    <ui:InfoBar Margin="0,0,0,10"
-                                Severity="Error"
-                                IsClosable="False"
-                                Title="Credencial no disponible"
+                    <ui:InfoBar Margin="0,0,0,10" Severity="Error" IsClosable="False" Title="Credencial no disponible"
                                 Message="{Binding Credentials.StatusMessage, Mode=OneWay}"
                                 IsOpen="{Binding Credentials.HasStorageError, Mode=OneWay}" />
 
                     <!-- §2.10: el perfil de Windows cambió y la credencial guardada no se descifra. -->
-                    <ui:InfoBar Margin="0,0,0,10"
-                                Severity="Warning"
-                                IsClosable="False"
+                    <ui:InfoBar Margin="0,0,0,10" Severity="Warning" IsClosable="False"
                                 Title="Credencial no recuperable en este perfil"
                                 Message="{Binding Credentials.ReentryWarningText, Mode=OneWay}"
                                 IsOpen="{Binding Credentials.ShowsNotRecoverableWarning, Mode=OneWay}" />
@@ -283,14 +309,11 @@
                         <layout:ResponsiveColumnsPanel Style="{StaticResource PageFormRow}">
                             <TextBlock Style="{StaticResource CredentialLabel}" Text="Contraseña guardada" />
                             <StackPanel Orientation="Horizontal">
-                                <ui:PasswordBox Width="320"
-                                                HorizontalAlignment="Left"
-                                                IsEnabled="False"
+                                <ui:PasswordBox Width="320" HorizontalAlignment="Left" IsEnabled="False"
                                                 RevealButtonEnabled="False"
                                                 ToolTip="La contraseña guardada nunca se muestra."
                                                 Password="{Binding Credentials.StoredCredentialMask, Mode=OneWay}" />
-                                <ui:Button Margin="8,0,0,0"
-                                           Content="{Binding Credentials.EditButtonText}"
+                                <ui:Button Margin="8,0,0,0" Content="{Binding Credentials.EditButtonText}"
                                            ToolTip="Entrar en modo edición de la credencial"
                                            Command="{Binding Credentials.BeginEditCommand}">
                                     <ui:Button.Icon>
@@ -345,29 +368,11 @@
                         </layout:ResponsiveColumnsPanel>
 
                         <StackPanel Style="{StaticResource PageActionRow}">
-                            <ui:Button Content="{Binding Credentials.SaveButtonText}"
-                                       Appearance="Primary"
+                            <ui:Button Content="{Binding Credentials.SaveButtonText}" Appearance="Primary"
                                        Command="{Binding Credentials.ReplaceCommand}" />
-                            <ui:Button Content="Cancelar"
-                                       Margin="8,0,0,0"
-                                       Appearance="Secondary"
+                            <ui:Button Content="Cancelar" Margin="8,0,0,0" Appearance="Secondary"
                                        Command="{Binding Credentials.CancelEditCommand}" />
-                            <ui:ProgressRing Width="16"
-                                             Height="16"
-                                             Margin="12,0,0,0"
-                                             VerticalAlignment="Center"
-                                             IsIndeterminate="True">
-                                <ui:ProgressRing.Style>
-                                    <Style TargetType="ui:ProgressRing">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Credentials.IsBusy}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </ui:ProgressRing.Style>
-                            </ui:ProgressRing>
+                            <ui:ProgressRing Style="{StaticResource CredentialProgressRing}" />
                         </StackPanel>
                     </StackPanel>
 

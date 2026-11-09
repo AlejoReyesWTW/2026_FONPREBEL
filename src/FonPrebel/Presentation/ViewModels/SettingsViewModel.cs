@@ -32,6 +32,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
     private readonly ConfigurationReadinessGate _gate;
     private readonly IConnectionMonitor _connectionMonitor;
+    private readonly IConfirmationDialog _confirmationDialog;
     private readonly ILogger<SettingsViewModel> _logger;
 
     [ObservableProperty]
@@ -52,6 +53,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
         IEmailCredentialService credentialService,
         ConfigurationReadinessGate gate,
         IConnectionMonitor connectionMonitor,
+        IConfirmationDialog confirmationDialog,
         ILogger<SettingsViewModel> logger)
         : base("settings", "Configuración",
                "Correo, proxy, rutas del servidor de archivos, intervalos y credenciales. Mientras falte un campo obligatorio, el proceso no arranca.")
@@ -61,10 +63,12 @@ public sealed partial class SettingsViewModel : SectionViewModel
         ArgumentNullException.ThrowIfNull(credentialService);
         ArgumentNullException.ThrowIfNull(gate);
         ArgumentNullException.ThrowIfNull(connectionMonitor);
+        ArgumentNullException.ThrowIfNull(confirmationDialog);
         ArgumentNullException.ThrowIfNull(logger);
 
         _gate = gate;
         _connectionMonitor = connectionMonitor;
+        _confirmationDialog = confirmationDialog;
         _logger = logger;
 
         Email = new EmailSettingsViewModel(configurationStore, emailStore);
@@ -80,6 +84,14 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
         Credentials.StateChanged += OnFieldStateChanged;
         Credentials.PropertyChanged += OnCredentialPropertyChanged;
+
+        // §2.9.2 r10 y r14: el seguimiento de cambios mira el valor de cada campo y el interruptor del proxy.
+        foreach (ValidatedFieldViewModel field in AllFields)
+        {
+            field.PropertyChanged += OnFieldValueChanged;
+        }
+
+        Proxy.PropertyChanged += OnProxyPropertyChanged;
 
         PublishReadiness();
     }
@@ -144,6 +156,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
             await Credentials.RefreshAsync(cancellationToken).ConfigureAwait(true);
             await RevalidateAllAsync().ConfigureAwait(true);
+
+            // §2.9.2 r10: lo recién leído es la referencia contra la que se mide un cambio real.
+            AcceptStoredValues();
         }
         finally
         {
@@ -153,8 +168,10 @@ public sealed partial class SettingsViewModel : SectionViewModel
     }
 
     /// <summary>
-    /// Valida todos los campos y, sólo si no hay valores inválidos, guarda la configuración. Nunca
-    /// persiste un valor inválido. Devuelve verdadero cuando la escritura se completó.
+    /// Guarda la configuración sólo cuando hay un cambio real y todos los valores son válidos. Sin
+    /// diferencia con lo almacenado no escribe nada y no muestra ningún diálogo (§2.9.2 r11); si el guardado
+    /// deja la configuración incompleta para operar, pide confirmación antes de escribir (§2.9.2 r12).
+    /// Nunca persiste un valor inválido. Devuelve verdadero cuando la escritura se completó.
     /// </summary>
     public async Task<bool> SaveAsync(CancellationToken cancellationToken = default)
     {
@@ -162,11 +179,27 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
         try
         {
+            // §2.9.2 r11: con los valores idénticos a los almacenados no se escribe nada ni se muestra diálogo.
+            if (!HasChanges)
+            {
+                return false;
+            }
+
             await RevalidateAllAsync().ConfigureAwait(true);
 
             if (AllFields.Any(field => !field.IsValid))
             {
                 SetStatus(InvalidMessage, isError: true);
+                PublishReadiness();
+
+                return false;
+            }
+
+            // §2.9.2 r12: un guardado válido que deja la configuración incompleta para operar se persiste,
+            // pero antes el analista confirma; si cancela no se escribe nada y los valores quedan en pantalla.
+            if (!IsConfigurationCompleteForOperation && !ConfirmIncompleteSave())
+            {
+                SetStatus(SaveCancelledMessage, isError: false);
                 PublishReadiness();
 
                 return false;
@@ -191,6 +224,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
                 section.ClearIndicators();
             }
 
+            // §2.9.2 r13: lo guardado sobrescribe la clave y pasa a ser la referencia de comparación.
+            AcceptStoredValues();
+
             PublishReadiness();
 
             // §2.9.2 r2: con los datos ya guardados se ofrece comprobar las conexiones. Se ofrece, no se
@@ -211,87 +247,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [RelayCommand]
     private Task Load() => LoadAsync();
 
-    /// <summary>Guarda la configuración desde la pantalla.</summary>
-    [RelayCommand]
+    /// <summary>Guarda la configuración desde la pantalla; sólo se puede pulsar con un cambio real.</summary>
+    [RelayCommand(CanExecute = nameof(CanSave))]
     private Task Save() => SaveAsync();
-
-    /// <summary>
-    /// Texto de la oferta que aparece tras guardar (§2.9.2 r2): comprobar las conexiones con los datos
-    /// recién guardados. Se ofrece, no se ejecuta sola, porque una comprobación real toca la red y tarda.
-    /// </summary>
-    public string ConnectionOfferMessage { get; } =
-        "¿Quieres comprobar ahora el servidor de archivos y el correo con los datos guardados?";
-
-    /// <summary>Verdadero mientras la oferta de comprobar las conexiones está a la vista.</summary>
-    [ObservableProperty]
-    private bool _hasConnectionOffer;
-
-    /// <summary>Resultado de la comprobación ofrecida, una línea por destino; vacío mientras no se ejecutó.</summary>
-    [ObservableProperty]
-    private string _connectionOfferResultText = string.Empty;
-
-    /// <summary>Verdadero cuando la comprobación ofrecida dejó un resultado para mostrar.</summary>
-    [ObservableProperty]
-    private bool _hasConnectionOfferResult;
-
-    /// <summary>
-    /// Corre la comprobación de los destinos que el monitor ya declara, sin repetir sus claves acá, y deja
-    /// el resultado visible con el motivo de los que no se pudieron comprobar.
-    /// </summary>
-    [RelayCommand]
-    private async Task OfferConnectionTest()
-    {
-        IReadOnlyList<ConnectionTargetSnapshot> targets = _connectionMonitor.Snapshots;
-
-        if (targets.Count == 0)
-        {
-            HasConnectionOffer = false;
-
-            return;
-        }
-
-        HasConnectionOffer = false;
-        IsBusy = true;
-
-        try
-        {
-            foreach (ConnectionTargetSnapshot target in targets)
-            {
-                await _connectionMonitor.CheckNowAsync(target.TargetKey).ConfigureAwait(true);
-            }
-
-            ConnectionOfferResultText = DescribeConnectionOfferResult(_connectionMonitor.Snapshots);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-
-        HasConnectionOfferResult = ConnectionOfferResultText.Length > 0;
-    }
-
-    /// <summary>Cierra la oferta sin comprobar nada.</summary>
-    [RelayCommand]
-    private void DismissConnectionOffer()
-    {
-        HasConnectionOffer = false;
-        HasConnectionOfferResult = false;
-        ConnectionOfferResultText = string.Empty;
-    }
-
-    /// <summary>Una línea por destino con el estado informado y su motivo cuando corresponde.</summary>
-    private static string DescribeConnectionOfferResult(IReadOnlyList<ConnectionTargetSnapshot> snapshots) =>
-        string.Join(
-            Environment.NewLine,
-            snapshots.Select(snapshot =>
-            {
-                string state = ConnectionStatusText.For(snapshot.Status);
-                string? reason = snapshot.LastResult?.Reason;
-
-                return string.IsNullOrWhiteSpace(reason)
-                    ? $"{snapshot.TargetName}: {state}."
-                    : $"{snapshot.TargetName}: {state} — {reason}.";
-            }));
 
     private async Task<ConfigurationWriteResult> SaveAllAsync(CancellationToken cancellationToken)
     {
@@ -327,13 +285,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
     /// <summary>Publica si la configuración obligatoria está completa; el gate sólo se abre con todo válido.</summary>
     private void PublishReadiness()
     {
-        bool valid = !HasStorageError
-            && !Credentials.HasStorageError
-            && !IsBusy
-            && AllFields.All(field => field.IsValid && !field.IsValidating)
-            && Credentials.AllowsStart;
-
-        _gate.Report(valid);
+        _gate.Report(IsConfigurationCompleteForOperation && !IsBusy);
     }
 
     private void SetStorageState(ConfigurationStoreOutcome outcome)
@@ -365,5 +317,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
         }
     }
 
-    partial void OnIsBusyChanged(bool value) => PublishReadiness();
+    partial void OnIsBusyChanged(bool value)
+    {
+        PublishReadiness();
+        NotifySaveStateChanged();
+    }
 }

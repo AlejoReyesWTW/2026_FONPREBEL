@@ -29,13 +29,20 @@ internal sealed class ConfigurationTestContext : IDisposable
             NullLogger<EmailCredentialService>.Instance);
         Gate = new ConfigurationReadinessGate();
         Monitor = new FakeConnectionMonitor();
+        ConfirmationDialog = new FakeConfirmationDialog();
+
+        // Los contadores envuelven a los almacenes reales: la pantalla escribe contra SQLite y la prueba
+        // observa si hubo escritura sin mirar las tablas por dentro (§2.9.2 r11).
+        ConfigurationWrites = new CountingConfigurationStore(ConfigurationStore);
+        EmailWrites = new CountingEmailSettingsStore(EmailStore);
 
         Settings = new SettingsViewModel(
-            ConfigurationStore,
-            EmailStore,
+            ConfigurationWrites,
+            EmailWrites,
             CredentialService,
             Gate,
             Monitor,
+            ConfirmationDialog,
             NullLogger<SettingsViewModel>.Instance);
 
         Execution = new ExecutionViewModel(Gate);
@@ -63,6 +70,18 @@ internal sealed class ConfigurationTestContext : IDisposable
     public ConfigurationReadinessGate Gate { get; }
 
     public FakeConnectionMonitor Monitor { get; }
+
+    /// <summary>Diálogo modal de prueba; por defecto confirma y registra cada aviso (§2.9.2 r12).</summary>
+    public FakeConfirmationDialog ConfirmationDialog { get; }
+
+    /// <summary>Almacén de parámetros generales que cuenta las escrituras de la pantalla.</summary>
+    public CountingConfigurationStore ConfigurationWrites { get; }
+
+    /// <summary>Almacén de correo que cuenta las escrituras de la pantalla.</summary>
+    public CountingEmailSettingsStore EmailWrites { get; }
+
+    /// <summary>Escrituras pedidas al almacén desde que arrancó la prueba.</summary>
+    public int WriteCount => ConfigurationWrites.WriteCount + EmailWrites.WriteCount;
 
     public SettingsViewModel Settings { get; }
 

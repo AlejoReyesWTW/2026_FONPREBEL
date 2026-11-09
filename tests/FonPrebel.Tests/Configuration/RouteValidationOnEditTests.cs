@@ -36,7 +36,9 @@ public sealed class RouteValidationOnEditTests
 
         Assert.False(saved);
         Assert.Equal(writes, context.WriteCount);
-        Assert.Equal(SettingsViewModel.InvalidMessage, context.Settings.StatusMessage);
+        Assert.Equal(
+            SettingsViewModel.DescribeBlockers(new[] { route1 }),
+            context.Settings.StatusMessage);
     }
 
     [Fact]

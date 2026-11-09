@@ -12,7 +12,11 @@ public sealed class EmailSettingsViewModel : SettingsSectionViewModel
     private readonly IAppConfigurationStore _configurationStore;
     private readonly IEmailSettingsStore _emailStore;
 
-    public EmailSettingsViewModel(IAppConfigurationStore configurationStore, IEmailSettingsStore emailStore)
+    public EmailSettingsViewModel(
+        IAppConfigurationStore configurationStore,
+        IEmailSettingsStore emailStore,
+        TimeSpan? minimumIndicatorDuration = null)
+        : base(minimumIndicatorDuration)
     {
         ArgumentNullException.ThrowIfNull(configurationStore);
         ArgumentNullException.ThrowIfNull(emailStore);
@@ -103,7 +107,9 @@ public sealed class EmailSettingsViewModel : SettingsSectionViewModel
 
     public override async Task<ConfigurationWriteResult> SaveAsync(CancellationToken cancellationToken = default)
     {
-        if (!NumericText.TryParseInt(Port.Value, out int port))
+        // §2.9.2 r16: un número vacío es un parámetro pendiente y se guarda nulo; un valor escrito que no
+        // es un entero ya quedó bloqueado por la validación del campo y nunca llega hasta acá.
+        if (!TryReadPendingNumber(Port, out int? port) || !TryReadPendingNumber(SendTimeout, out int? timeoutSeconds))
         {
             return ConfigurationWriteResult.Failed(ConfigurationStoreOutcome.InvalidValue);
         }
@@ -119,11 +125,6 @@ public sealed class EmailSettingsViewModel : SettingsSectionViewModel
         if (!email.Succeeded)
         {
             return email;
-        }
-
-        if (!NumericText.TryParseInt(SendTimeout.Value, out int timeoutSeconds))
-        {
-            return ConfigurationWriteResult.Failed(ConfigurationStoreOutcome.InvalidValue);
         }
 
         return await _configurationStore

@@ -16,7 +16,7 @@ namespace FonPrebel.Tests.Configuration;
 /// </summary>
 internal sealed class ConfigurationTestContext : IDisposable
 {
-    public ConfigurationTestContext()
+    public ConfigurationTestContext(TimeSpan? minimumIndicatorDuration = null)
     {
         Database = new TestDatabase();
         Database.Migrate();
@@ -43,7 +43,8 @@ internal sealed class ConfigurationTestContext : IDisposable
             Gate,
             Monitor,
             ConfirmationDialog,
-            NullLogger<SettingsViewModel>.Instance);
+            NullLogger<SettingsViewModel>.Instance,
+            minimumIndicatorDuration ?? TimeSpan.Zero);
 
         Execution = new ExecutionViewModel(Gate);
 

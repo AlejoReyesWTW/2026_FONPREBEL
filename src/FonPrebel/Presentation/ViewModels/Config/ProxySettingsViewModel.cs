@@ -17,7 +17,8 @@ public sealed partial class ProxySettingsViewModel : SettingsSectionViewModel
     [ObservableProperty]
     private bool _isProxyEnabled;
 
-    public ProxySettingsViewModel(IAppConfigurationStore configurationStore)
+    public ProxySettingsViewModel(IAppConfigurationStore configurationStore, TimeSpan? minimumIndicatorDuration = null)
+        : base(minimumIndicatorDuration)
     {
         ArgumentNullException.ThrowIfNull(configurationStore);
 

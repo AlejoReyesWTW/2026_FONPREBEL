@@ -88,7 +88,9 @@ public sealed class SettingsViewModelTests
         bool saved = await context.Settings.SaveAsync();
 
         Assert.False(saved);
-        Assert.Equal(SettingsViewModel.InvalidMessage, context.Settings.StatusMessage);
+        Assert.StartsWith(SettingsViewModel.SaveBlockedHeader, context.Settings.StatusMessage, StringComparison.Ordinal);
+        Assert.Contains(EmailSettingsValidation.PortParameter, context.Settings.StatusMessage, StringComparison.Ordinal);
+        Assert.Contains("entre 1 y 65535", context.Settings.StatusMessage, StringComparison.Ordinal);
         Assert.True(context.Settings.HasStatusError);
 
         ConfigurationReadResult<EmailSettings> stored = await context.EmailStore.ReadAsync();

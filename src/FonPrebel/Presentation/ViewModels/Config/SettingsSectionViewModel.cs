@@ -12,6 +12,14 @@ namespace FonPrebel.Presentation.ViewModels.Config;
 public abstract class SettingsSectionViewModel : ObservableObject
 {
     private readonly List<ValidatedFieldViewModel> _fields = new();
+    private readonly TimeSpan? _minimumIndicatorDuration;
+
+    /// <summary>Crea la sección con el tiempo mínimo del indicador de sus campos (§2.9.2 r18).</summary>
+    /// <param name="minimumIndicatorDuration">Tiempo mínimo visible; <c>null</c> usa el valor por omisión.</param>
+    protected SettingsSectionViewModel(TimeSpan? minimumIndicatorDuration = null)
+    {
+        _minimumIndicatorDuration = minimumIndicatorDuration;
+    }
 
     /// <summary>Campos de la sección, en el orden en que se muestran.</summary>
     public IReadOnlyList<ValidatedFieldViewModel> Fields => _fields;
@@ -38,13 +46,12 @@ public abstract class SettingsSectionViewModel : ObservableObject
     public abstract Task<ConfigurationWriteResult> SaveAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Vuelve a validar todos los campos de la sección y espera el resultado.</summary>
-    public async Task RevalidateAllAsync()
-    {
-        foreach (ValidatedFieldViewModel field in _fields)
-        {
-            await field.RevalidateAsync();
-        }
-    }
+    /// <remarks>
+    /// En paralelo: el indicador de cada campo se mantiene visible un tiempo mínimo (§2.9.2 r18), así que
+    /// validar uno por uno multiplicaría esa espera por la cantidad de campos.
+    /// </remarks>
+    public Task RevalidateAllAsync() =>
+        Task.WhenAll(_fields.Select(field => field.RevalidateAsync()));
 
     /// <summary>Limpia los indicadores visuales después de guardar (Anexo E, estado guardado).</summary>
     public void ClearIndicators()
@@ -62,7 +69,7 @@ public abstract class SettingsSectionViewModel : ObservableObject
         bool isEnabled = true,
         string? hint = null)
     {
-        ValidatedFieldViewModel field = new(label, validate, isEnabled, hint);
+        ValidatedFieldViewModel field = new(label, validate, isEnabled, hint, _minimumIndicatorDuration);
 
         field.ValidationCompleted += (_, _) => FieldStateChanged?.Invoke(this, EventArgs.Empty);
         field.PropertyChanged += (_, args) =>
@@ -84,6 +91,33 @@ public abstract class SettingsSectionViewModel : ObservableObject
         result.Succeeded && result.Value is int number
             ? number.ToString(System.Globalization.CultureInfo.InvariantCulture)
             : string.Empty;
+
+    /// <summary>
+    /// §2.9.2 r16: un campo vacío es un parámetro pendiente, así que se guarda como nulo y no bloquea; un
+    /// valor escrito que no es un entero es inválido y no se persiste. Devuelve falso sólo en ese segundo caso.
+    /// </summary>
+    protected static bool TryReadPendingNumber(ValidatedFieldViewModel field, out int? value)
+    {
+        ArgumentNullException.ThrowIfNull(field);
+
+        if (string.IsNullOrWhiteSpace(field.Value))
+        {
+            value = null;
+
+            return true;
+        }
+
+        if (NumericText.TryParseInt(field.Value, out int parsed))
+        {
+            value = parsed;
+
+            return true;
+        }
+
+        value = null;
+
+        return false;
+    }
 
     /// <summary>Texto del campo a partir de texto guardado; vacío cuando el parámetro está pendiente.</summary>
     protected static string ToText(ConfigurationReadResult<string> result) =>

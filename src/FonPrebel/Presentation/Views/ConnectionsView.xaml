@@ -21,17 +21,35 @@
         <layout:SpacedStackPanel>
             <!-- Barra superior: rechequeo automático, intervalo vigente y umbral de lentitud. -->
             <ui:Card Padding="16">
-                <layout:SpacedStackPanel Spacing="4">
-                    <TextBlock Text="{Binding AutoCheckText}"
-                               FontWeight="SemiBold"
-                               TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding SlowThresholdText}"
-                               TextWrapping="Wrap"
-                               Opacity="0.8" />
-                    <TextBlock Text="{Binding LastReviewText}"
-                               TextWrapping="Wrap"
-                               Opacity="0.8" />
-                </layout:SpacedStackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <layout:SpacedStackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="{Binding AutoCheckText}"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding SlowThresholdText}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.8" />
+                        <TextBlock Text="{Binding LastReviewText}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.8" />
+                    </layout:SpacedStackPanel>
+
+                    <!--
+                        Limpia sólo lo que se ve en los mini-logs. Los archivos de registro los escribe la
+                        bitácora diaria y esta pantalla nunca los abre ni los recorta (S17, §2.14).
+                    -->
+                    <ui:Button Grid.Column="1"
+                               Margin="16,0,0,0"
+                               VerticalAlignment="Top"
+                               Content="Limpiar vista"
+                               Command="{Binding ClearViewCommand}"
+                               ToolTip="Solo limpia lo que se ve en pantalla; no elimina ni recorta los archivos de registro en disco." />
+                </Grid>
             </ui:Card>
 
             <!-- Dos tarjetas: servidor de archivos y correo, cada una con su punto, su mini-log y su botón. -->

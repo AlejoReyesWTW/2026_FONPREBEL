@@ -5,8 +5,9 @@ using FonPrebel.Presentation.ViewModels.Config;
 namespace FonPrebel.Presentation.ViewModels;
 
 /// <summary>
-/// Seguimiento de cambios y confirmación modal de la pantalla Configuración (§2.9.2 r10-r13): el botón
-/// Guardar se habilita sólo con un cambio real respecto de lo almacenado y un guardado que deja la
+/// Seguimiento de cambios, rechazo con nombres y confirmación modal de la pantalla Configuración
+/// (§2.9.2 r10-r13 y r17): el botón Guardar se habilita sólo con un cambio real respecto de lo almacenado,
+/// un valor escrito que no pasa su comprobación se rechaza nombrando el campo, y un guardado que deja la
 /// configuración incompleta para operar pide confirmación antes de escribir.
 /// </summary>
 public sealed partial class SettingsViewModel
@@ -34,14 +35,31 @@ public sealed partial class SettingsViewModel
     public bool CanSave => HasChanges && !IsBusy;
 
     /// <summary>
-    /// S18 y §2.9.2 r12: la configuración alcanza para operar sólo con todos los campos válidos y la
-    /// credencial de correo configurada (Anexo D.2). Es el mismo estado que gobierna el botón INICIAR.
+    /// S18 y §2.9.2 r12: la configuración alcanza para operar sólo con todos los campos obligatorios
+    /// válidos y completados y la credencial de correo configurada (Anexo D.2). Es el mismo estado que
+    /// gobierna el botón INICIAR. Un obligatorio vacío ya es inválido para su propia regla, así que el inicio
+    /// queda cerrado aunque el guardado parcial sí se permita (§2.9.2 r16); un campo opcional vacío no cierra
+    /// el inicio, porque su regla lo acepta.
     /// </summary>
     private bool IsConfigurationCompleteForOperation =>
         !HasStorageError
         && !Credentials.HasStorageError
         && AllFields.All(field => field.IsValid && !field.IsValidating)
         && Credentials.AllowsStart;
+
+    /// <summary>
+    /// §2.9.2 r17: mensaje que nombra cada campo con un valor escrito que impide guardar, con el motivo de
+    /// su comprobación. Reemplaza el "revisa los campos marcados" genérico: el analista nunca adivina.
+    /// </summary>
+    /// <param name="blockers">Campos que bloquean el guardado, en el orden en que se muestran.</param>
+    public static string DescribeBlockers(IEnumerable<ValidatedFieldViewModel> blockers)
+    {
+        ArgumentNullException.ThrowIfNull(blockers);
+
+        string[] lines = blockers.Select(field => $"{field.Label}: {field.Motive}").ToArray();
+
+        return $"{SaveBlockedHeader} Estos campos lo impiden: {string.Join(" ", lines)}";
+    }
 
     /// <summary>§2.9.2 r12: aviso modal previo a persistir una configuración incompleta para operar.</summary>
     private bool ConfirmIncompleteSave() => _confirmationDialog.Confirm(IncompleteSaveTitle, IncompleteSaveMessage);

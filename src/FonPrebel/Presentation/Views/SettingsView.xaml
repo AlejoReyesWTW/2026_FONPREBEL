@@ -10,15 +10,13 @@
                 <ResourceDictionary Source="/FonPrebel;component/Presentation/Views/Layout/PageLayout.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- §2.9.2 r14: el lápiz y la cancelación de la edición se muestran según el estado del campo. -->
             <BooleanToVisibilityConverter x:Key="FieldStateToVisibility" />
 
             <!-- Anexo E y §2.9.2 r15: el spinner del campo sólo se ve mientras ese campo valida. -->
             <Style x:Key="FieldProgressRing" TargetType="ui:ProgressRing">
                 <Setter Property="Width" Value="12" />
                 <Setter Property="Height" Value="12" />
-                <Setter Property="Margin" Value="0,0,12,0" />
-                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="Margin" Value="8,0,0,0" />
                 <Setter Property="VerticalAlignment" Value="Center" />
                 <Setter Property="IsIndeterminate" Value="True" />
                 <Setter Property="Visibility" Value="Collapsed" />
@@ -29,7 +27,37 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- Indicador de trabajo en curso de la sección; sólo se ve mientras la pantalla está ocupada. -->
+            <!--
+                Acción principal (§2.9.2 r10). Plantilla propia: WPF-UI pinta "Primary" con el acento de
+                Windows —rojo en el equipo del analista— y su estado deshabilitado no se distinguía.
+            -->
+            <Style x:Key="PrimaryActionButton" TargetType="ui:Button">
+                <Setter Property="Foreground" Value="#FFFFFF" />
+                <Setter Property="Padding" Value="16,7" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ui:Button">
+                            <Border x:Name="Surface" Padding="{TemplateBinding Padding}" Background="#0078D4" CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Surface" Property="Background" Value="#106EBE" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Surface" Property="Background" Value="#005A9E" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Surface" Property="Background" Value="{DynamicResource ControlFillColorDisabledBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Trabajo en curso de la pantalla y de la credencial. -->
             <Style x:Key="BusyProgressRing" TargetType="ui:ProgressRing">
                 <Setter Property="VerticalAlignment" Value="Center" />
                 <Setter Property="IsIndeterminate" Value="True" />
@@ -41,7 +69,6 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- Indicador de la credencial: se guía por el trabajo en curso de su propio bloque. -->
             <Style x:Key="CredentialProgressRing" TargetType="ui:ProgressRing">
                 <Setter Property="Width" Value="16" />
                 <Setter Property="Height" Value="16" />
@@ -56,12 +83,7 @@
                 </Style.Triggers>
             </Style>
 
-            <!--
-                Anexo E: etiqueta, campo, spinner de 12 px y mensaje concreto del parámetro.
-                §2.9.2 r14: el campo se muestra en sólo lectura y el lápiz habilita su edición; mientras
-                edita aparecen las acciones de cancelar.
-                §2.9.2 r15: el indicador de progreso va dentro del propio campo mientras comprueba la ruta.
-            -->
+            <!-- Anexo E y §2.9.2 r14-r19: el indicador tiene su columna, nunca encima del texto del campo. -->
             <DataTemplate x:Key="ValidatedFieldTemplate" DataType="{x:Type config:ValidatedFieldViewModel}">
                 <layout:ResponsiveColumnsPanel Style="{StaticResource PageFormRow}">
                     <StackPanel VerticalAlignment="Center">
@@ -91,13 +113,21 @@
                                     </Style>
                                 </Border.Style>
 
-                                <!-- El spinner vive dentro del campo, sobre el borde que marca su estado. -->
+                                <!-- §2.9.2 r15 y r19: el spinner va al lado del texto, sin tapar el campo. -->
                                 <Grid>
-                                    <ui:TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                                IsEnabled="{Binding IsEnabled}"
-                                                IsReadOnly="{Binding IsReadOnly, Mode=OneWay}" />
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-                                    <ui:ProgressRing Style="{StaticResource FieldProgressRing}" />
+                                    <ui:TextBox Grid.Column="0"
+                                                Focusable="True"
+                                                IsTabStop="True"
+                                                IsEnabled="{Binding IsEnabled}"
+                                                IsReadOnly="{Binding IsReadOnly, Mode=OneWay}"
+                                                Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+
+                                    <ui:ProgressRing Grid.Column="1" Style="{StaticResource FieldProgressRing}" />
                                 </Grid>
                             </Border>
 
@@ -107,6 +137,10 @@
                                         <Setter Property="Visibility" Value="Hidden" />
                                         <Setter Property="Foreground" Value="#0F7B0F" />
                                         <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowsPending}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding ShowsError}" Value="True">
                                                 <Setter Property="Visibility" Value="Visible" />
                                                 <Setter Property="Foreground" Value="#C42B1C" />
@@ -120,11 +154,9 @@
                         <!-- §2.9.2 r14: el lápiz habilita la edición de este campo y sólo de este. -->
                         <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top" Orientation="Horizontal">
                             <ui:Button ToolTip="Editar este campo"
-                                       Command="{Binding BeginEditCommand}"
-                                       Visibility="{Binding CanBeginEdit, Converter={StaticResource FieldStateToVisibility}}">
-                                <ui:Button.Icon>
-                                    <ui:SymbolIcon Symbol="Edit24" />
-                                </ui:Button.Icon>
+                                       IsEnabled="{Binding CanBeginEdit}"
+                                       Command="{Binding BeginEditCommand}">
+                                <ui:Button.Icon><ui:SymbolIcon Symbol="Edit24" /></ui:Button.Icon>
                             </ui:Button>
 
                             <ui:Button Content="Cancelar"
@@ -136,7 +168,7 @@
                 </layout:ResponsiveColumnsPanel>
             </DataTemplate>
 
-            <!-- Fila de contraseña del bloque de credenciales: misma grilla que los campos del formulario. -->
+            <!-- Contraseña: mismo patrón de etiqueta y campo que el formulario. -->
             <Style x:Key="CredentialField" TargetType="ui:PasswordBox">
                 <Setter Property="Width" Value="320" />
                 <Setter Property="HorizontalAlignment" Value="Left" />
@@ -146,8 +178,7 @@
             <Style x:Key="CredentialLabel" TargetType="TextBlock" BasedOn="{StaticResource PageFormLabel}" />
 
             <Style x:Key="StatusText" TargetType="TextBlock">
-                <Setter Property="TextWrapping" Value="Wrap" />
-                <Setter Property="Foreground" Value="#0F7B0F" />
+                <Setter Property="TextWrapping" Value="Wrap" /><Setter Property="Foreground" Value="#0F7B0F" />
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding HasStatusError}" Value="True">
                         <Setter Property="Foreground" Value="#C42B1C" />
@@ -157,20 +188,13 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <!--
-        S25: una sola columna centrada de 960 con relleno de 32. Es un formulario, así que el ancho máximo
-        queda por debajo de las vistas de tarjetas para que las líneas de lectura sigan siendo cortas.
-    -->
+    <!-- S25: una sola columna centrada de 960; es un formulario y las líneas de lectura siguen cortas. -->
     <layout:PageLayout HeaderTitle="{Binding Title}"
                        HeaderSubtitle="{Binding Description}"
                        ContentMaxWidth="960">
         <layout:PageLayout.Footer>
             <StackPanel>
-                <!--
-                    §2.9.2 r2: al guardar se ofrece comprobar las conexiones. No se lanza sola, porque una
-                    comprobación real toca la red y tarda: la decide el analista. Cuando la sonda no se pudo
-                    hacer, el resultado muestra el motivo en lugar de presentarla como un éxito.
-                -->
+                <!-- §2.9.2 r2: al guardar se ofrece comprobar las conexiones; no se lanza sola porque toca la red. -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -217,7 +241,8 @@
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <ui:ProgressRing Width="18" Height="18" Style="{StaticResource BusyProgressRing}" />
-                        <ui:Button Margin="12,0,0,0" Content="Guardar" Appearance="Primary" MinWidth="120"
+                        <ui:Button Margin="12,0,0,0" Content="Guardar" MinWidth="120"
+                                   Style="{StaticResource PrimaryActionButton}"
                                    Command="{Binding SaveCommand}" />
                     </StackPanel>
                 </Grid>
@@ -235,10 +260,8 @@
             <ui:Card Padding="20">
                 <StackPanel>
                     <TextBlock Style="{StaticResource PageSectionTitle}" Text="Correo" />
-                    <TextBlock Style="{StaticResource PageSectionNote}"
-                               Text="Servidor, puerto, seguridad, remitente, cuenta y tiempo de espera. Ningún valor está confirmado todavía: los campos arrancan vacíos y el puerto es obligatorio siempre." />
-                    <ItemsControl ItemsSource="{Binding Email.Fields}"
-                                  ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    <TextBlock Style="{StaticResource PageSectionNote}" Text="Ningún valor confirmado todavía: los campos arrancan vacíos y el puerto es obligatorio siempre." />
+                    <ItemsControl ItemsSource="{Binding Email.Fields}" ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
                 </StackPanel>
             </ui:Card>
 
@@ -246,13 +269,10 @@
             <ui:Card Padding="20">
                 <StackPanel>
                     <TextBlock Style="{StaticResource PageSectionTitle}" Text="Proxy" />
-                    <TextBlock Style="{StaticResource PageSectionNote}"
-                               Text="El proxy no lleva usuario ni contraseña. Apagado, el campo de texto queda deshabilitado y vacío." />
-                    <ui:ToggleSwitch Content="Usar proxy"
-                                     Margin="0,0,0,14"
+                    <TextBlock Style="{StaticResource PageSectionNote}" Text="Sin usuario ni contraseña. Apagado, el campo de texto queda deshabilitado y vacío." />
+                    <ui:ToggleSwitch Content="Usar proxy" Margin="0,0,0,14"
                                      IsChecked="{Binding Proxy.IsProxyEnabled, UpdateSourceTrigger=PropertyChanged}" />
-                    <ItemsControl ItemsSource="{Binding Proxy.Fields}"
-                                  ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    <ItemsControl ItemsSource="{Binding Proxy.Fields}" ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
                 </StackPanel>
             </ui:Card>
 
@@ -260,10 +280,8 @@
             <ui:Card Padding="20">
                 <StackPanel>
                     <TextBlock Style="{StaticResource PageSectionTitle}" Text="Rutas del servidor de archivos" />
-                    <TextBlock Style="{StaticResource PageSectionNote}"
-                               Text="Las rutas las entrega TI. Se comprueba que existan y, en las que la aplicación escribe, que tengan permiso de escritura." />
-                    <ItemsControl ItemsSource="{Binding Routes.Fields}"
-                                  ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    <TextBlock Style="{StaticResource PageSectionNote}" Text="Las entrega TI. Se comprueba que existan y, donde la aplicación escribe, que haya permiso." />
+                    <ItemsControl ItemsSource="{Binding Routes.Fields}" ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
                 </StackPanel>
             </ui:Card>
 
@@ -271,10 +289,8 @@
             <ui:Card Padding="20">
                 <StackPanel>
                     <TextBlock Style="{StaticResource PageSectionTitle}" Text="Intervalos y concurrencia" />
-                    <TextBlock Style="{StaticResource PageSectionNote}"
-                               Text="La verificación automática de conexiones corre cada 2 minutos. El umbral de conexión lenta y la cantidad de trabajadores están pendientes: se muestran vacíos." />
-                    <ItemsControl ItemsSource="{Binding Intervals.Fields}"
-                                  ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
+                    <TextBlock Style="{StaticResource PageSectionNote}" Text="La verificación corre cada 2 minutos. El umbral y los trabajadores están pendientes: se muestran vacíos." />
+                    <ItemsControl ItemsSource="{Binding Intervals.Fields}" ItemTemplate="{StaticResource ValidatedFieldTemplate}" />
                 </StackPanel>
             </ui:Card>
 
@@ -285,19 +301,16 @@
                     <TextBlock Style="{StaticResource PageSectionNote}" Text="{Binding Credentials.StateText}" />
 
                     <ui:InfoBar Margin="0,0,0,10" Severity="Error" IsClosable="False" Title="Credencial no disponible"
-                                Message="{Binding Credentials.StatusMessage, Mode=OneWay}"
-                                IsOpen="{Binding Credentials.HasStorageError, Mode=OneWay}" />
+                                Message="{Binding Credentials.StatusMessage, Mode=OneWay}" IsOpen="{Binding Credentials.HasStorageError, Mode=OneWay}" />
 
                     <!-- §2.10: el perfil de Windows cambió y la credencial guardada no se descifra. -->
-                    <ui:InfoBar Margin="0,0,0,10" Severity="Warning" IsClosable="False"
-                                Title="Credencial no recuperable en este perfil"
+                    <ui:InfoBar Margin="0,0,0,10" Severity="Warning" IsClosable="False" Title="Credencial no recuperable en este perfil"
                                 Message="{Binding Credentials.ReentryWarningText, Mode=OneWay}"
                                 IsOpen="{Binding Credentials.ShowsNotRecoverableWarning, Mode=OneWay}" />
 
                     <StackPanel>
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Visible" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Credentials.IsEditing}" Value="True">
                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -309,16 +322,13 @@
                         <layout:ResponsiveColumnsPanel Style="{StaticResource PageFormRow}">
                             <TextBlock Style="{StaticResource CredentialLabel}" Text="Contraseña guardada" />
                             <StackPanel Orientation="Horizontal">
-                                <ui:PasswordBox Width="320" HorizontalAlignment="Left" IsEnabled="False"
-                                                RevealButtonEnabled="False"
+                                <ui:PasswordBox Width="320" HorizontalAlignment="Left" IsEnabled="False" RevealButtonEnabled="False"
                                                 ToolTip="La contraseña guardada nunca se muestra."
                                                 Password="{Binding Credentials.StoredCredentialMask, Mode=OneWay}" />
                                 <ui:Button Margin="8,0,0,0" Content="{Binding Credentials.EditButtonText}"
                                            ToolTip="Entrar en modo edición de la credencial"
                                            Command="{Binding Credentials.BeginEditCommand}">
-                                    <ui:Button.Icon>
-                                        <ui:SymbolIcon Symbol="Edit24" />
-                                    </ui:Button.Icon>
+                                    <ui:Button.Icon><ui:SymbolIcon Symbol="Edit24" /></ui:Button.Icon>
                                 </ui:Button>
                             </StackPanel>
                         </layout:ResponsiveColumnsPanel>
@@ -337,17 +347,8 @@
                         </StackPanel.Style>
 
                         <!-- Sólo con una credencial utilizable se pide la contraseña anterior (§3.2). -->
-                        <Grid Margin="0,0,0,14">
-                            <Grid.Style>
-                                <Style TargetType="Grid">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Credentials.RequiresPreviousPassword}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Grid.Style>
+                        <Grid Margin="0,0,0,14"
+                              Visibility="{Binding Credentials.RequiresPreviousPassword, Converter={StaticResource FieldStateToVisibility}}">
                             <layout:ResponsiveColumnsPanel Style="{StaticResource PageFormRow}" Margin="0">
                                 <TextBlock Style="{StaticResource CredentialLabel}" Text="Contraseña anterior" />
                                 <ui:PasswordBox Style="{StaticResource CredentialField}"
@@ -368,7 +369,8 @@
                         </layout:ResponsiveColumnsPanel>
 
                         <StackPanel Style="{StaticResource PageActionRow}">
-                            <ui:Button Content="{Binding Credentials.SaveButtonText}" Appearance="Primary"
+                            <ui:Button Content="{Binding Credentials.SaveButtonText}"
+                                       Style="{StaticResource PrimaryActionButton}"
                                        Command="{Binding Credentials.ReplaceCommand}" />
                             <ui:Button Content="Cancelar" Margin="8,0,0,0" Appearance="Secondary"
                                        Command="{Binding Credentials.CancelEditCommand}" />

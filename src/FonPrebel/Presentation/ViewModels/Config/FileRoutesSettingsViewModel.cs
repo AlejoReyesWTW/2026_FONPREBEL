@@ -12,7 +12,8 @@ public sealed class FileRoutesSettingsViewModel : SettingsSectionViewModel
 {
     private readonly IAppConfigurationStore _configurationStore;
 
-    public FileRoutesSettingsViewModel(IAppConfigurationStore configurationStore)
+    public FileRoutesSettingsViewModel(IAppConfigurationStore configurationStore, TimeSpan? minimumIndicatorDuration = null)
+        : base(minimumIndicatorDuration)
     {
         ArgumentNullException.ThrowIfNull(configurationStore);
 

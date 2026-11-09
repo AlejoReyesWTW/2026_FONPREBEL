@@ -26,9 +26,11 @@ public sealed partial class SettingsViewModel : SectionViewModel
     public const string StorageErrorMessage =
         "No se pudo acceder a la configuración porque la base de datos local no está disponible.";
 
-    /// <summary>Aviso cuando se intenta guardar con valores inválidos.</summary>
-    public const string InvalidMessage =
-        "Revisa los campos marcados: hay parámetros obligatorios vacíos o con formato inválido.";
+    /// <summary>
+    /// Encabezado del rechazo de §2.9.2 r17: nunca es un mensaje genérico, porque debajo se nombra cada
+    /// campo que impide guardar con el motivo de su comprobación.
+    /// </summary>
+    public const string SaveBlockedHeader = "No se guardó la configuración.";
 
     private readonly ConfigurationReadinessGate _gate;
     private readonly IConnectionMonitor _connectionMonitor;
@@ -54,7 +56,8 @@ public sealed partial class SettingsViewModel : SectionViewModel
         ConfigurationReadinessGate gate,
         IConnectionMonitor connectionMonitor,
         IConfirmationDialog confirmationDialog,
-        ILogger<SettingsViewModel> logger)
+        ILogger<SettingsViewModel> logger,
+        TimeSpan? minimumIndicatorDuration = null)
         : base("settings", "Configuración",
                "Correo, proxy, rutas del servidor de archivos, intervalos y credenciales. Mientras falte un campo obligatorio, el proceso no arranca.")
     {
@@ -71,10 +74,10 @@ public sealed partial class SettingsViewModel : SectionViewModel
         _confirmationDialog = confirmationDialog;
         _logger = logger;
 
-        Email = new EmailSettingsViewModel(configurationStore, emailStore);
-        Proxy = new ProxySettingsViewModel(configurationStore);
-        Routes = new FileRoutesSettingsViewModel(configurationStore);
-        Intervals = new IntervalsSettingsViewModel(configurationStore);
+        Email = new EmailSettingsViewModel(configurationStore, emailStore, minimumIndicatorDuration);
+        Proxy = new ProxySettingsViewModel(configurationStore, minimumIndicatorDuration);
+        Routes = new FileRoutesSettingsViewModel(configurationStore, minimumIndicatorDuration);
+        Intervals = new IntervalsSettingsViewModel(configurationStore, minimumIndicatorDuration);
         Credentials = new CredentialSettingsViewModel(credentialService);
 
         foreach (SettingsSectionViewModel section in Sections)
@@ -168,10 +171,10 @@ public sealed partial class SettingsViewModel : SectionViewModel
     }
 
     /// <summary>
-    /// Guarda la configuración sólo cuando hay un cambio real y todos los valores son válidos. Sin
-    /// diferencia con lo almacenado no escribe nada y no muestra ningún diálogo (§2.9.2 r11); si el guardado
-    /// deja la configuración incompleta para operar, pide confirmación antes de escribir (§2.9.2 r12).
-    /// Nunca persiste un valor inválido. Devuelve verdadero cuando la escritura se completó.
+    /// Guarda la configuración con un cambio real. Sin diferencia con lo almacenado no escribe nada y no
+    /// muestra ningún diálogo (§2.9.2 r11). Un valor escrito que no pasa su comprobación rechaza el guardado
+    /// nombrando los campos (§2.9.2 r17); un obligatorio vacío no bloquea, deja la configuración incompleta y
+    /// dispara el aviso modal previo a escribir (§2.9.2 r12 y r16). Devuelve verdadero si se escribió.
     /// </summary>
     public async Task<bool> SaveAsync(CancellationToken cancellationToken = default)
     {
@@ -185,11 +188,13 @@ public sealed partial class SettingsViewModel : SectionViewModel
                 return false;
             }
 
+            // Una comprobación en curso se espera; nunca se rechaza el guardado por estar todavía validando.
             await RevalidateAllAsync().ConfigureAwait(true);
 
-            if (AllFields.Any(field => !field.IsValid))
+            ValidatedFieldViewModel[] blockers = AllFields.Where(field => field.IsBlocking).ToArray();
+            if (blockers.Length > 0)
             {
-                SetStatus(InvalidMessage, isError: true);
+                SetStatus(DescribeBlockers(blockers), isError: true);
                 PublishReadiness();
 
                 return false;
@@ -274,15 +279,13 @@ public sealed partial class SettingsViewModel : SectionViewModel
         return await Intervals.SaveAsync(cancellationToken).ConfigureAwait(true);
     }
 
-    private async Task RevalidateAllAsync()
-    {
-        foreach (SettingsSectionViewModel section in Sections)
-        {
-            await section.RevalidateAllAsync().ConfigureAwait(true);
-        }
-    }
+    private async Task RevalidateAllAsync() =>
+        await Task.WhenAll(Sections.Select(section => section.RevalidateAllAsync())).ConfigureAwait(true);
 
-    /// <summary>Publica si la configuración obligatoria está completa; el gate sólo se abre con todo válido.</summary>
+    /// <summary>
+    /// Publica si la configuración obligatoria está completa; el gate sólo se abre con todo obligatorio
+    /// completado y válido, así un campo vacío no habilita INICIAR (§2.9.2 r16, Anexo D).
+    /// </summary>
     private void PublishReadiness()
     {
         _gate.Report(IsConfigurationCompleteForOperation && !IsBusy);

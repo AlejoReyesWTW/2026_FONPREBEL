@@ -61,6 +61,19 @@ public sealed partial class ConnectionsViewModel : SectionViewModel, IDisposable
     /// <inheritdoc />
     public void Dispose() => _monitor.Updated -= OnMonitorUpdated;
 
+    /// <summary>
+    /// Limpia sólo lo que se ve en los mini-logs (§2.14). No toca los archivos de registro: esos los
+    /// escribe la bitácora diaria y esta pantalla nunca los abre.
+    /// </summary>
+    [RelayCommand]
+    private void ClearView()
+    {
+        foreach (ConnectionTargetViewModel target in Targets)
+        {
+            target.ClearView();
+        }
+    }
+
     /// <summary>Vuelve a pintar la pantalla desde el último estado del monitor.</summary>
     public void Refresh()
     {
@@ -196,6 +209,9 @@ public sealed partial class ConnectionTargetViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasReason;
 
+    private DateTimeOffset? _clearedThroughUtc;
+    private DateTimeOffset? _newestShownUtc;
+
     public ConnectionTargetViewModel(string targetKey, string targetName, Func<string, Task> check)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(targetKey);
@@ -224,6 +240,17 @@ public sealed partial class ConnectionTargetViewModel : ObservableObject
     /// <summary>Botón "Comprobar conexión" de la tarjeta.</summary>
     public IAsyncRelayCommand CheckCommand { get; }
 
+    /// <summary>
+    /// Limpia el mini-log de la vista sin borrar nada en disco: recuerda hasta qué intento se ocultó, de
+    /// modo que los intentos siguientes vuelven a aparecer y los ya vistos no regresan con el rechequeo.
+    /// </summary>
+    public void ClearView()
+    {
+        _clearedThroughUtc = _newestShownUtc;
+        _newestShownUtc = null;
+        LogLines.Clear();
+    }
+
     /// <summary>Vuelca el estado del monitor en la tarjeta.</summary>
     public void Apply(ConnectionTargetSnapshot snapshot)
     {
@@ -244,11 +271,20 @@ public sealed partial class ConnectionTargetViewModel : ObservableObject
     private void ReplaceLog(IReadOnlyList<ConnectionProbeResult> entries)
     {
         LogLines.Clear();
+        _newestShownUtc = null;
 
         foreach (ConnectionProbeResult entry in entries)
         {
+            // §2.14: lo que el analista ya limpió de la vista no vuelve con el siguiente rechequeo.
+            if (_clearedThroughUtc is DateTimeOffset clearedThrough && entry.AttemptedAtUtc <= clearedThrough)
+            {
+                continue;
+            }
+
             LogLines.Add(
                 $"{entry.AttemptedAtUtc.ToLocalTime():HH:mm:ss} · {ConnectionStatusText.For(entry.Status)}: {entry.Message}");
+
+            _newestShownUtc = entry.AttemptedAtUtc;
         }
     }
 

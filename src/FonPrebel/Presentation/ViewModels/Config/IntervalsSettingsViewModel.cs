@@ -12,7 +12,8 @@ public sealed class IntervalsSettingsViewModel : SettingsSectionViewModel
 {
     private readonly IAppConfigurationStore _configurationStore;
 
-    public IntervalsSettingsViewModel(IAppConfigurationStore configurationStore)
+    public IntervalsSettingsViewModel(IAppConfigurationStore configurationStore, TimeSpan? minimumIndicatorDuration = null)
+        : base(minimumIndicatorDuration)
     {
         ArgumentNullException.ThrowIfNull(configurationStore);
 
@@ -90,7 +91,8 @@ public sealed class IntervalsSettingsViewModel : SettingsSectionViewModel
 
         foreach ((string key, ValidatedFieldViewModel field) in values)
         {
-            if (!NumericText.TryParseInt(field.Value, out int number))
+            // §2.9.2 r16: el parámetro pendiente se guarda nulo y no impide guardar el resto.
+            if (!TryReadPendingNumber(field, out int? number))
             {
                 return ConfigurationWriteResult.Failed(ConfigurationStoreOutcome.InvalidValue);
             }

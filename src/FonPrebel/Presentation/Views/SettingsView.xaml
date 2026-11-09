@@ -109,41 +109,87 @@
                        HeaderSubtitle="{Binding Description}"
                        ContentMaxWidth="960">
         <layout:PageLayout.Footer>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <StackPanel>
+                <!--
+                    §2.9.2 r2: al guardar se ofrece comprobar las conexiones. No se lanza sola, porque una
+                    comprobación real toca la red y tarda: la decide el analista. Cuando la sonda no se pudo
+                    hacer, el resultado muestra el motivo en lugar de presentarla como un éxito.
+                -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasConnectionOffer}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
 
-                <TextBlock Grid.Column="0"
-                           Margin="0,0,16,0"
-                           VerticalAlignment="Center"
-                           Style="{StaticResource StatusText}"
-                           Text="{Binding StatusMessage}" />
+                    <TextBlock VerticalAlignment="Center"
+                               Style="{StaticResource StatusText}"
+                               Text="{Binding ConnectionOfferMessage}" />
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <ui:ProgressRing Width="18"
-                                     Height="18"
-                                     VerticalAlignment="Center"
-                                     IsIndeterminate="True">
-                        <ui:ProgressRing.Style>
-                            <Style TargetType="ui:ProgressRing">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ui:ProgressRing.Style>
-                    </ui:ProgressRing>
                     <ui:Button Margin="12,0,0,0"
-                               Content="Guardar"
-                               Appearance="Primary"
-                               MinWidth="120"
-                               Command="{Binding SaveCommand}" />
+                               Content="Comprobar ahora"
+                               Command="{Binding OfferConnectionTestCommand}" />
+                    <ui:Button Margin="8,0,0,0"
+                               Content="Ahora no"
+                               Command="{Binding DismissConnectionOfferCommand}" />
                 </StackPanel>
-            </Grid>
+
+                <TextBlock Margin="0,0,0,12"
+                           TextWrapping="Wrap"
+                           Text="{Binding ConnectionOfferResultText}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource StatusText}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasConnectionOfferResult}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Margin="0,0,16,0"
+                               VerticalAlignment="Center"
+                               Style="{StaticResource StatusText}"
+                               Text="{Binding StatusMessage}" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:ProgressRing Width="18"
+                                         Height="18"
+                                         VerticalAlignment="Center"
+                                         IsIndeterminate="True">
+                            <ui:ProgressRing.Style>
+                                <Style TargetType="ui:ProgressRing">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:ProgressRing.Style>
+                        </ui:ProgressRing>
+                        <ui:Button Margin="12,0,0,0"
+                                   Content="Guardar"
+                                   Appearance="Primary"
+                                   MinWidth="120"
+                                   Command="{Binding SaveCommand}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
         </layout:PageLayout.Footer>
 
         <layout:SpacedStackPanel>

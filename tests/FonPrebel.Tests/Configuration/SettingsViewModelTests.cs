@@ -166,6 +166,7 @@ public sealed class SettingsViewModelTests
                 new DpapiCredentialProvider(),
                 NullLogger<EmailCredentialService>.Instance),
             gate,
+            new FakeConnectionMonitor(),
             NullLogger<SettingsViewModel>.Instance);
 
         await settings.LoadAsync();

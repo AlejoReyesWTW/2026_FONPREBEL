@@ -28,12 +28,14 @@ internal sealed class ConfigurationTestContext : IDisposable
             new DpapiCredentialProvider(),
             NullLogger<EmailCredentialService>.Instance);
         Gate = new ConfigurationReadinessGate();
+        Monitor = new FakeConnectionMonitor();
 
         Settings = new SettingsViewModel(
             ConfigurationStore,
             EmailStore,
             CredentialService,
             Gate,
+            Monitor,
             NullLogger<SettingsViewModel>.Instance);
 
         Execution = new ExecutionViewModel(Gate);
@@ -59,6 +61,8 @@ internal sealed class ConfigurationTestContext : IDisposable
     public EmailCredentialService CredentialService { get; }
 
     public ConfigurationReadinessGate Gate { get; }
+
+    public FakeConnectionMonitor Monitor { get; }
 
     public SettingsViewModel Settings { get; }
 

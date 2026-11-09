@@ -1,7 +1,7 @@
 # D1 — Arquitectura y decisiones técnicas
 
 Estado: decisiones D-01 a D-04 cerradas por el usuario el 2026-11-06. Nada aquí está implementado.
-Fuente: `Specs/especificacion-fon-prebel-v0.12.md` §2.1–§2.7, §5.4, §5.5 y Anexo F.
+Fuente: `Specs/especificacion-fon-prebel-v0.13.md` §2.1–§2.7, §5.4, §5.5 y Anexo F.
 
 ## 1. Plataforma objetivo
 

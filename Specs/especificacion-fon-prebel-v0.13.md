@@ -1,8 +1,8 @@
 # Fon Prebel - Manejo de Pólizas de Jubilados
 
-**Versión 0.12 -- Estado del botón Guardar, aviso de configuración incompleta y edición por campo**\
+**Versión 0.13 -- Vacío no es inválido, aviso de guardado parcial y feedback del formulario**\
 **Estado:** Borrador en construcción.\
-**Documento base:** Versión 0.11.\
+**Documento base:** Versión 0.12.\
 **Fecha de actualización:** 7 de noviembre de 2026.
 
 > Este documento conserva los requisitos funcionales de la versión 0.2 e
@@ -508,6 +508,21 @@ Lo que **no** es configuración editable:
     inválido con su motivo y el guardado no se completa: nunca se inicia
     un proceso con una ruta inexistente, sin acceso o sin permiso de
 escritura.
+
+16. Un campo **vacío** y un campo **inválido** no son lo mismo. Vacío es un
+    obligatorio que todavía no se completó: **no impide guardar**, cuenta como
+    configuración incompleta y dispara el aviso del punto 12. Inválido es un
+    valor escrito que no pasa su comprobación (formato incorrecto, ruta que no
+    existe o sin permiso): **sí impide guardar** y el dato nunca se persiste.
+17. Cuando un guardado se rechaza, la pantalla dice **qué campos** lo impiden,
+    con su nombre, y no un mensaje genérico. Si el rechazo viene de una ruta, se
+    informa el motivo de la comprobación. El analista nunca tiene que adivinar
+    por qué no se guardó.
+18. El indicador de progreso de un campo se mantiene visible un tiempo mínimo
+    perceptible aunque la comprobación termine antes: una comprobación que no se
+    llega a ver no comunica nada.
+19. La edición de un campo no puede atrapar el foco: se puede salir con el mouse
+    o con Tab y el formulario sigue siendo utilizable sin pasos ocultos.
 
 ### 2.10 Credenciales y seguridad
 
@@ -1320,6 +1335,7 @@ Estas reglas aplican al implementar esta especificación:
 | 0.10 | Aclaración del cálculo y presentación de TOTAL MENSUAL POLIZA: agrupación por asociado y póliza, suma única y combinación vertical de celdas en Excel. | Borrador anterior |
 | 0.11 | La ruta 2 pasa de 16 a 13 archivos de póliza por decisión del analista. Se actualizan el resumen (apartado 1), la ruta 2 (apartado 2.12), el flujo de la fase 1 (apartado 4), los pendientes de datos y reglas de negocio (apartado 5.1) y el Anexo A. Los nombres, el contenido y la correspondencia de columnas de esos archivos siguen pendientes. | Borrador anterior |
 | 0.12 | Comportamiento del guardado de Configuración (apartado 2.9.2, reglas 10 a 15): el botón Guardar arranca inactivo y se activa sólo con un cambio real, no se reescribe lo idéntico, el guardado incompleto se permite con un diálogo modal de advertencia, cada guardado sobrescribe el valor anterior, los campos se editan de a uno con un ícono de lápiz sobre un formulario en sólo lectura, y cada campo de ruta comprueba existencia y acceso con un indicador de progreso dentro del propio campo. | Borrador actualizado |
+| 0.13 | Corrección del guardado de Configuración (apartado 2.9.2, reglas 16 a 19): un campo vacío no es inválido y no impide guardar — dispara el aviso del punto 12 —, un valor inválido sí bloquea, el rechazo nombra los campos que lo causan, el indicador de validación se mantiene visible un tiempo perceptible y la edición no atrapa el foco. Corrige la versión 0.12, donde un obligatorio vacío bloqueaba el guardado en silencio. | Borrador actualizado |
 
 **La versión 0.9 no representa todavía una especificación cerrada ni
 autorización para comenzar todas las funcionalidades.** Los pendientes

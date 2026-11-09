@@ -1,7 +1,7 @@
 # D2 + D4 — Modelo de datos, estados y recuperación
 
 Estado: diseño propuesto para aprobación. No hay base creada ni migración escrita.
-Fuente: `Specs/especificacion-fon-prebel-v0.12.md` §2.6, §2.7, §2.8, §2.9, §2.10, §2.17, §5.3, §5.4, Anexo C, Anexo F.
+Fuente: `Specs/especificacion-fon-prebel-v0.13.md` §2.6, §2.7, §2.8, §2.9, §2.10, §2.17, §5.3, §5.4, Anexo C, Anexo F.
 Regla que gobierna este documento: el spec exige que el esquema se **diseñe y documente antes de implementarlo** (§2.7), y prohíbe inventar campos de negocio (§2.7, §6 regla 2). Por eso cada columna de negocio aparece con la sección que la nombra, o marcada como técnica.
 
 ## 1. Convenciones

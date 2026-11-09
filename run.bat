@@ -39,5 +39,7 @@ if errorlevel 1 (
 
 echo.
 echo Listo: la aplicacion esta abierta.
-timeout /t 3 >nul
+rem Se usa la ruta absoluta porque el "timeout" de Git for Windows tambien se
+rem llama timeout.exe y gana en el PATH cuando se ejecuta desde esa consola.
+"%SystemRoot%\System32\timeout.exe" /t 3 /nobreak >nul 2>nul
 exit /b 0

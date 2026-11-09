@@ -29,7 +29,7 @@ public static class FileRouteValidation
     public static ValidationResult ValidateConsolidatedFile(string? path) =>
         ValidateExistingFile(Route1Parameter, path);
 
-    /// <summary>Ruta 2: la carpeta de los 16 archivos de póliza debe existir.</summary>
+    /// <summary>Ruta 2: la carpeta de los 13 archivos de póliza debe existir.</summary>
     public static ValidationResult ValidatePolicyFolder(string? path) =>
         ValidateExistingFolder(Route2Parameter, path);
 

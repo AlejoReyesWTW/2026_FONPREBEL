@@ -26,7 +26,7 @@ public sealed class FileRoutesSettingsViewModel : SettingsSectionViewModel
         Route2 = AddField(
             FileRouteValidation.Route2Parameter,
             FileRouteValidation.ValidatePolicyFolder,
-            hint: "Carpeta con los 16 archivos de póliza.");
+            hint: "Carpeta con los 13 archivos de póliza.");
 
         Route3 = AddField(
             FileRouteValidation.Route3Parameter,
@@ -42,7 +42,7 @@ public sealed class FileRoutesSettingsViewModel : SettingsSectionViewModel
     /// <summary>Ruta 1: consolidado anual.</summary>
     public ValidatedFieldViewModel Route1 { get; }
 
-    /// <summary>Ruta 2: los 16 archivos de póliza.</summary>
+    /// <summary>Ruta 2: los 13 archivos de póliza.</summary>
     public ValidatedFieldViewModel Route2 { get; }
 
     /// <summary>Ruta 3: archivo del analista.</summary>

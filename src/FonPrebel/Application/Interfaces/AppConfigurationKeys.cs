@@ -15,7 +15,7 @@ public static class AppConfigurationKeys
     /// <summary>Ruta 1: consolidado anual (§2.12).</summary>
     public const string Route1 = "FileServer.Route1";
 
-    /// <summary>Ruta 2: los 16 archivos de póliza (§2.12).</summary>
+    /// <summary>Ruta 2: los 13 archivos de póliza (§2.12).</summary>
     public const string Route2 = "FileServer.Route2";
 
     /// <summary>Ruta 3: archivo del analista, que la fase 2 sobrescribe (§2.12).</summary>

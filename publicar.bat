@@ -29,6 +29,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Listo: copia publish\FonPrebel-win-x64.zip a la otra maquina.
+echo Listo. Revisa la carpeta publish\: el paquete para copiar es
+echo publish\FonPrebel-win-x64.zip si existe, o la carpeta publish\FonPrebel.
 pause
 exit /b 0

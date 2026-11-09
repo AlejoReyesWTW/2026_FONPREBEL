@@ -33,12 +33,31 @@ if ($running) {
     Start-Sleep -Milliseconds 800
 }
 
+# Se borra el paquete anterior junto con la carpeta: si la publicacion falla, no
+# queda un zip viejo con aspecto de actual. Un artefacto que sobrevive a un build
+# fallido termina siendo el que se entrega.
 if (Test-Path $out) {
     Remove-Item $out -Recurse -Force
 }
 
+if (Test-Path $zip) {
+    Remove-Item $zip -Force
+}
+
+# Los intermedios de Release se borran a proposito: si se reusan, el compilador
+# conserva el bloque de depuracion (RSDS) que lleva la ruta absoluta del .pdb en
+# esta maquina, y ese bloque viaja dentro de FonPrebel.dll.
+foreach ($stale in @('src/FonPrebel/obj/Release', 'src/FonPrebel/bin/Release')) {
+    $path = Join-Path $root $stale
+    if (Test-Path $path) {
+        Remove-Item $path -Recurse -Force
+    }
+}
+
 Write-Host 'Publicando autocontenido win-x64...'
-& dotnet publish $project -c $Configuration -r win-x64 --self-contained true -o $out
+# DebugType=None evita el bloque de depuracion en el PE, que ademas de los .pdb lleva
+# la ruta absoluta de esta maquina de desarrollo.
+& dotnet publish $project -c $Configuration -r win-x64 --self-contained true -p:DebugType=None -p:DebugSymbols=false -o $out
 if ($LASTEXITCODE -ne 0) {
     throw 'La publicacion fallo. Revisa los errores de arriba.'
 }
@@ -56,14 +75,23 @@ foreach ($file in $required) {
     }
 }
 
+# Los .pdb no se entregan: llevan la ruta absoluta de esta maquina de desarrollo y
+# el nombre de usuario, que no tienen por que viajar a la maquina del cliente.
+# El costo es que un seguimiento de pila en errors.log muestra metodo sin numero de
+# linea; para el analista no cambia nada.
+$symbols = Get-ChildItem $out -Filter '*.pdb' -File
+if ($symbols) {
+    $symbols | Remove-Item -Force
+    Write-Host "Simbolos quitados del paquete: $($symbols.Count) archivo(s) .pdb"
+}
+
 $size = [math]::Round(((Get-ChildItem $out -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB), 1)
 Write-Host "Carpeta publicada: $out ($size MB)"
 
-if (-not $NoZip) {
-    if (Test-Path $zip) {
-        Remove-Item $zip -Force
-    }
-
+if ($NoZip) {
+    Write-Host 'Sin zip por pedido (-NoZip): se publico solo la carpeta.'
+}
+else {
     Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip -CompressionLevel Optimal
     $zipSize = [math]::Round(((Get-Item $zip).Length / 1MB), 1)
     Write-Host "Paquete para copiar: $zip ($zipSize MB)"

@@ -11,9 +11,12 @@ Métricas, Logs e Historial, pero INICIAR no procesa archivos.
 ## 1. Qué necesita la máquina de destino
 
 - Windows 10 u 11, 64 bits.
-- Permiso de **lectura** en las cuatro rutas del servidor de archivos y de
-  **escritura** donde la aplicación escribe: hoja del mes del consolidado (ruta 1),
-  archivo del analista que completa la fase 2 (ruta 3) y carpeta de PDFs (ruta 4).
+- Permiso de **lectura** en las cuatro rutas del servidor de archivos. Además,
+  permiso de **escritura** donde la aplicación va a escribir cuando existan las
+  fases: la hoja del mes del consolidado (ruta 1), el archivo del analista de la
+  fase 2 (ruta 3) y la carpeta de PDFs (ruta 4). Hoy la aplicación sólo comprueba
+  que las rutas existan y se puedan abrir; el permiso de escritura se ejercita
+  recién con las fases B1 y B2, que todavía no están implementadas.
 - Una cuenta de correo utilizable para los envíos (pendiente de confirmar con TI).
 - **No necesita** el SDK de .NET, ni Visual Studio, ni permisos de administrador.
 
@@ -51,7 +54,10 @@ bloquea el DLL) y verifica que el runtime viaje adentro: si falta `hostfxr.dll`,
 Notas:
 
 - Es **portátil**: no se instala en `Program Files`, no escribe en el registro y no
-  requiere administrador. Desinstalar es borrar la carpeta.
+  requiere administrador. Desinstalar es borrar la carpeta de la aplicación; los
+  datos **no** se borran con eso: quedan en `%LOCALAPPDATA%\FonPrebel` (base,
+  credencial cifrada y logs). Para dejarla limpia del todo hay que borrar también
+  esa carpeta.
 - El ejecutable **no está firmado**, así que Windows puede mostrar el aviso de
   SmartScreen la primera vez ("Más información" → "Ejecutar de todas formas"). Si TI
   exige un binario firmado, eso se resuelve con un certificado de firma de código y
@@ -66,7 +72,7 @@ Todo queda en el perfil de Windows del usuario que ejecuta la aplicación:
 
 - Base SQLite: `%LOCALAPPDATA%\FonPrebel\Database\FonPrebel.db`
 - Logs: `%LOCALAPPDATA%\FonPrebel\Logs\<fecha>\execution.log` y `errors.log`
-- Salida del Excel final: carpeta local `Salida/` (ubicación exacta pendiente, §5.5)
+- Salida del Excel final: carpeta local `Salida/` (ubicación exacta pendiente, §5.7)
 
 **Nada de eso viaja con la aplicación.** Copiar la carpeta a otra máquina no copia la
 configuración ni la contraseña: se cargan una vez en cada máquina.
@@ -87,7 +93,8 @@ En la máquina que tiene acceso al servidor de archivos:
    alcanza para ejecutar el aplicativo.
 5. Ir a **Conexiones** y usar "Comprobar conexión" en el servidor de archivos: debe
    responder cuántas de las cuatro rutas configuradas existen y se pueden leer. El
-   rechequeo automático corre cada 2 minutos.
+   rechequeo automático corre cada 2 minutos por omisión; el intervalo se cambia
+   en Configuración.
 6. **INICIAR** se habilita recién cuando la configuración obligatoria está completa y la
    credencial es utilizable. Hoy, al pulsarlo, informa que el proceso de las fases está
    pendiente: no procesa archivos todavía.

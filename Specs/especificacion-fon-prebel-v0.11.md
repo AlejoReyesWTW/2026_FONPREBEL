@@ -1,9 +1,9 @@
 # Fon Prebel - Manejo de Pólizas de Jubilados
 
-**Versión 0.10 -- Aclaración del agrupamiento visual y cálculo de TOTAL MENSUAL POLIZA**\
+**Versión 0.11 -- Reducción de los insumos de la ruta 2: de 16 a 13 archivos de póliza**\
 **Estado:** Borrador en construcción.\
-**Documento base:** Versión 0.8.\
-**Fecha de actualización:** 5 de noviembre de 2026.
+**Documento base:** Versión 0.10.\
+**Fecha de actualización:** 7 de noviembre de 2026.
 
 > Este documento conserva los requisitos funcionales de la versión 0.2 e
 > incorpora las decisiones acordadas durante la revisión. Los puntos no
@@ -16,7 +16,7 @@
 ## 1. Resumen
 
 Aplicativo de escritorio para Fon Prebel que automatiza el procesamiento
-mensual de pólizas de jubilados: consolida información de 16 tipos de
+mensual de pólizas de jubilados: consolida información de 13 tipos de
 póliza, completa el archivo que prepara el analista, genera un PDF por
 jubilado, lo envía por correo electrónico y entrega un informe en Excel
 de quiénes fueron notificados y quiénes no.
@@ -608,7 +608,7 @@ SQLite.
 -   Ruta 1: Excel consolidado anual, con una pestaña por mes. Se llama
     `BASE DE ASEGURADOS CONSOLIDADA TODAS LAS PÓLIZAS_2026` (lleva el año
     al final). Sus columnas y el plazo mensual están en el Anexo A.
--   Ruta 2: 16 archivos, uno por tipo de póliza (probablemente Excel).
+-   Ruta 2: 13 archivos, uno por tipo de póliza (probablemente Excel).
 -   Ruta 3: Excel que el analista llena manualmente (también donde la
     aplicación completa los valores en la fase 2). Se llama
     `FINAL PLANILLA REPORTE MENSUAL NÓMINA JUBILADOS FONPREBEL`. Sus
@@ -923,10 +923,10 @@ La SQLite local no contiene usuarios del aplicativo.
     consolidado anual (ruta 1).
 3.  Crea una hoja nueva con el nombre del mes actual en mayúscula, por
     ejemplo NOVIEMBRE, con las columnas descritas en el Anexo A.
-4.  Entra a la ruta 2, recorre los 16 archivos de tipos de póliza, copia
+4.  Entra a la ruta 2, recorre los 13 archivos de tipos de póliza, copia
     ciertas columnas de cada uno y las pega en la hoja nueva del
     consolidado. Las columnas de destino son las del Anexo A; las columnas de origen de
-    cada uno de los 16 archivos y su correspondencia con ellas están
+    cada uno de los 13 archivos y su correspondencia con ellas están
     pendientes de definir.
 5.  Al terminar, la aplicación se detiene y muestra una alerta: la fase
     1 terminó y se pide confirmar si el archivo que el analista debe
@@ -1069,8 +1069,13 @@ Reglas de negocio conocidas hasta ahora; se irán afinando.
 ### 5.1 Datos y reglas de negocio
 
 -   Rutas exactas del servidor de archivos.
--   Columnas de origen de cada uno de los 16 archivos y su
+-   Columnas de origen de cada uno de los 13 archivos y su
     correspondencia con las 8 columnas del consolidado (Anexo A).
+-   Confirmar si la reducción de 16 a 13 insumos corresponde también a
+    la cantidad de tipos de póliza, o sólo a la cantidad de archivos que
+    se entregan de la ruta 2.
+-   Nombres y extensión de los 13 archivos de la ruta 2, y cómo se
+    identifica el que corresponde a cada tipo de póliza.
 -   Confirmar que RAMO y CEDULA ASOCIADO son dos columnas distintas del
     consolidado.
 -   Confirmar el nombre exacto y la extensión del archivo consolidado, y
@@ -1279,7 +1284,8 @@ Estas reglas aplican al implementar esta especificación:
 | 0.7 | Acceso a datos con EF Core, sin SQL en texto en el código (apartado 2.7). Proxy configurable con interruptor. Logo entregado en la raíz del proyecto y movido a `Assets/`. Inicio de sesión contra una base central de SQL Server como etapa final (apartado 2.23). Excepción del límite de 400 líneas para código autogenerado. | Borrador anterior |
 | 0.8 | Anexo A: nombre y columnas del archivo consolidado y plazo mensual del 1 al 5. Referencias en la ruta 1, la fase 1, la fase 2, negocio y pendientes. | Borrador anterior |
 | 0.9 | Anexo B: nombre y 12 columnas del archivo del analista que se cruza con el consolidado, y comparación entre ambos archivos. Referencias en la ruta 3, las fases 2 a 5 y los pendientes. | Borrador anterior |
-| 0.10 | Aclaración del cálculo y presentación de TOTAL MENSUAL POLIZA: agrupación por asociado y póliza, suma única y combinación vertical de celdas en Excel. | Borrador actualizado |
+| 0.10 | Aclaración del cálculo y presentación de TOTAL MENSUAL POLIZA: agrupación por asociado y póliza, suma única y combinación vertical de celdas en Excel. | Borrador anterior |
+| 0.11 | La ruta 2 pasa de 16 a 13 archivos de póliza por decisión del analista. Se actualizan el resumen (apartado 1), la ruta 2 (apartado 2.12), el flujo de la fase 1 (apartado 4), los pendientes de datos y reglas de negocio (apartado 5.1) y el Anexo A. Los nombres, el contenido y la correspondencia de columnas de esos archivos siguen pendientes. | Borrador actualizado |
 
 **La versión 0.9 no representa todavía una especificación cerrada ni
 autorización para comenzar todas las funcionalidades.** Los pendientes
@@ -1320,7 +1326,7 @@ Los nombres se registran tal como los entregó el analista. En el mensaje
 original, RAMO y CEDULA ASOCIADO venían sin separador; se interpretaron
 como dos columnas distintas, lo cual está pendiente de confirmar.
 
-Las columnas de origen de cada uno de los 16 archivos de pólizas y cómo
+Las columnas de origen de cada uno de los 13 archivos de pólizas y cómo
 se corresponden con estas 8 están pendientes de definir (apartado 5.1).
 
 ### A.3 Plazo mensual

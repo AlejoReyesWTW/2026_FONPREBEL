@@ -1,7 +1,7 @@
 # D1 — Arquitectura y decisiones técnicas
 
 Estado: decisiones D-01 a D-04 cerradas por el usuario el 2026-11-06. Nada aquí está implementado.
-Fuente: `Specs/especificacion-fon-prebel-v0.10.md` §2.1–§2.7, §5.4, §5.5 y Anexo F.
+Fuente: `Specs/especificacion-fon-prebel-v0.11.md` §2.1–§2.7, §5.4, §5.5 y Anexo F.
 
 ## 1. Plataforma objetivo
 
@@ -20,7 +20,7 @@ Fuente: `Specs/especificacion-fon-prebel-v0.10.md` §2.1–§2.7, §5.4, §5.5 y
 | D-01 | .NET 8 LTS (`net8.0-windows`) | El SDK 8 **ya no hace falta instalarlo**: `global.json` declara `8.0.100` con `rollForward: latestMajor`, y el SDK 10 instalado compila `net8.0-windows` sin problema. El runtime 8 ya está presente (`Microsoft.WindowsDesktop.App 8.0.33`), así que la app corre en 8 tal cual. EF Core queda en 8.x, alineado. Verificado en el proyecto BBVA (§1.2). |
 | D-02 | PDF: `PDFsharp` + `MigraDoc` (MIT) | Librería de PDF más usada del ecosistema .NET, documentada, mantenida, sin costo legal. iText queda descartada por AGPL/comercial en un banco. El nivel de cifrado (AES-128/256) se verifica con un prototipo en B4. |
 | D-03 | Compatibilidad obligatoria con VS 2022 | El formato del `.sln` y la versión de C# deben ser los que VS 2022 entiende. Nada de funciones de C# 13+ ni de .NET 9/10. |
-| D-04 | Sin datos reales todavía | El usuario no tiene las rutas ni los 16 archivos de póliza. Todo el bloque A (esqueleto y backend) se construye sin datos reales; B1 queda bloqueada hasta que existan los archivos. |
+| D-04 | Sin datos reales todavía | El usuario no tiene las rutas ni los 13 archivos de póliza. Todo el bloque A (esqueleto y backend) se construye sin datos reales; B1 queda bloqueada hasta que existan los archivos. |
 
 ### 1.2 Precedente verificado: el proyecto BBVA
 
@@ -124,7 +124,7 @@ El requisito del usuario es que se pruebe en su máquina personal y funcione en 
 
 | Riesgo | Consecuencia | Mitigación |
 |---|---|---|
-| Los 16 archivos de póliza no están en el repositorio | B1 no puede diseñarse | Confirmado por el usuario (D-04): no los tiene. B1 queda bloqueada; el bloque A avanza igual |
+| Los 13 archivos de póliza no están en el repositorio | B1 no puede diseñarse | Confirmado por el usuario (D-04): no los tiene. B1 queda bloqueada; el bloque A avanza igual |
 | .NET 8 LTS termina su soporte en noviembre de 2026 | Actualización obligatoria de plataforma a mediano plazo | Dejar la migración a .NET 10 como cambio aislado y posterior; no condiciona el diseño actual |
 | Los encabezados reales difieren del Anexo A/B | Un mapeo literal rompe la fase 1 y 2 | Resolver por nombre normalizado (sin tildes, sin espacios, sin `#`) y confirmar la lista final |
 | PDFsharp puede no ofrecer AES-256 en la versión elegida | El banco podría exigir 256 bits | Prototipo mínimo de cifrado al inicio de B4: generar, cifrar y abrir con la cédula. Si hace falta 256 bits se evalúa entonces, con evidencia |

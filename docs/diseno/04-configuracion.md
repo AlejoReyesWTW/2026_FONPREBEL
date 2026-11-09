@@ -1,7 +1,7 @@
 # D5 — Matriz de configuración y reglas de credenciales
 
 Estado: propuesta de diseño. No hay nada implementado.
-Fuente: `Specs/especificacion-fon-prebel-v0.10.md` §2.9, §2.9.1, §2.9.2, §2.10, §2.10.1, §2.10.2, Anexo D.
+Fuente: `Specs/especificacion-fon-prebel-v0.11.md` §2.9, §2.9.1, §2.9.2, §2.10, §2.10.1, §2.10.2, Anexo D.
 Regla que gobierna el documento: "**Ningún parámetro tiene un valor por defecto inventado**: los valores reales los entregan TI y el analista" (§2.9.1). Todo campo sin valor confirmado se guarda nulo y se muestra vacío.
 
 ## 1. Parámetros
@@ -27,7 +27,7 @@ La columna *Almacenamiento* respeta literalmente la tabla de §2.9.1, incluido e
 | Parámetro | Almacenamiento | Obligatorio | Validación | Valor |
 |---|---|---|---|---|
 | Ruta 1 — consolidado anual | `AppConfiguration` clave `FileServer.Route1` | sí | ruta existente y alcanzable; archivo, no carpeta | pendiente |
-| Ruta 2 — 16 archivos de póliza | `AppConfiguration` clave `FileServer.Route2` | sí | carpeta alcanzable | pendiente |
+| Ruta 2 — 13 archivos de póliza | `AppConfiguration` clave `FileServer.Route2` | sí | carpeta alcanzable | pendiente |
 | Ruta 3 — archivo del analista | `AppConfiguration` clave `FileServer.Route3` | sí | archivo existente y escribible (la fase 2 guarda ahí) | pendiente |
 | Ruta 4 — PDFs | `AppConfiguration` clave `FileServer.Route4` | sí | carpeta alcanzable y escribible | pendiente |
 

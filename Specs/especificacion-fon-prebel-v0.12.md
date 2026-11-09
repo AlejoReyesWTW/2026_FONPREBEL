@@ -1,8 +1,8 @@
 # Fon Prebel - Manejo de Pólizas de Jubilados
 
-**Versión 0.11 -- Reducción de los insumos de la ruta 2: de 16 a 13 archivos de póliza**\
+**Versión 0.12 -- Estado del botón Guardar, aviso de configuración incompleta y edición por campo**\
 **Estado:** Borrador en construcción.\
-**Documento base:** Versión 0.10.\
+**Documento base:** Versión 0.11.\
 **Fecha de actualización:** 7 de noviembre de 2026.
 
 > Este documento conserva los requisitos funcionales de la versión 0.2 e
@@ -475,6 +475,39 @@ Lo que **no** es configuración editable:
     indicó que no se necesita. Si en el futuro se exigiera, sería
     otro secreto cifrado con DPAPI y se agregaría en una versión
     posterior.
+10. El botón Guardar arranca **inactivo** en cada inicio de la
+    aplicación. Se activa sólo cuando al menos un campo cambió respecto
+    del valor almacenado; si el analista deshace el cambio, vuelve a
+    quedar inactivo.
+11. Si al pulsar Guardar los valores son idénticos a los almacenados, la
+    aplicación **no escribe nada** y no muestra ningún diálogo: no se
+    reescribe la misma fila.
+12. Un guardado cuyos campos modificados son válidos pero que deja la
+    configuración **incompleta para operar** (falta algún obligatorio) sí
+    se persiste, porque el analista puede querer avanzar de a poco, pero
+    antes de escribir la aplicación muestra un diálogo **modal** que
+    advierte que la información se guardará y que, sin todos los campos
+    obligatorios completos, el aplicativo no va a poder ejecutarse
+    correctamente. El analista confirma o cancela: si cancela, no se
+    escribe nada y los cambios quedan en pantalla. Cuando la
+    configuración queda completa, ese diálogo no aparece y se confirma el
+    guardado como hasta ahora.
+13. Cada guardado **sobrescribe** el valor anterior de la clave: no hay
+    historial de configuraciones ni versiones. Es el mecanismo previsto
+    para las rutas del servidor de archivos, que pueden cambiar.
+14. Los campos de los formularios se muestran en **sólo lectura**. Cada
+    campo tiene un ícono de **lápiz** que habilita su edición; mientras no
+    se habilite, el campo no se puede editar y no cuenta como cambio para
+    el punto 10. Un campo en edición que se cancela vuelve al valor
+    almacenado. Los interruptores (como el del proxy) y las acciones de
+    credenciales conservan su comportamiento propio.
+15. Al editar un campo de **ruta**, la aplicación comprueba en el acto que
+    exista y que se pueda leer o escribir según corresponda, y muestra un
+    **indicador de progreso (spinner) dentro del mismo campo** mientras la
+    comprueba. Si la comprobación falla, el campo queda marcado como
+    inválido con su motivo y el guardado no se completa: nunca se inicia
+    un proceso con una ruta inexistente, sin acceso o sin permiso de
+escritura.
 
 ### 2.10 Credenciales y seguridad
 
@@ -1285,7 +1318,8 @@ Estas reglas aplican al implementar esta especificación:
 | 0.8 | Anexo A: nombre y columnas del archivo consolidado y plazo mensual del 1 al 5. Referencias en la ruta 1, la fase 1, la fase 2, negocio y pendientes. | Borrador anterior |
 | 0.9 | Anexo B: nombre y 12 columnas del archivo del analista que se cruza con el consolidado, y comparación entre ambos archivos. Referencias en la ruta 3, las fases 2 a 5 y los pendientes. | Borrador anterior |
 | 0.10 | Aclaración del cálculo y presentación de TOTAL MENSUAL POLIZA: agrupación por asociado y póliza, suma única y combinación vertical de celdas en Excel. | Borrador anterior |
-| 0.11 | La ruta 2 pasa de 16 a 13 archivos de póliza por decisión del analista. Se actualizan el resumen (apartado 1), la ruta 2 (apartado 2.12), el flujo de la fase 1 (apartado 4), los pendientes de datos y reglas de negocio (apartado 5.1) y el Anexo A. Los nombres, el contenido y la correspondencia de columnas de esos archivos siguen pendientes. | Borrador actualizado |
+| 0.11 | La ruta 2 pasa de 16 a 13 archivos de póliza por decisión del analista. Se actualizan el resumen (apartado 1), la ruta 2 (apartado 2.12), el flujo de la fase 1 (apartado 4), los pendientes de datos y reglas de negocio (apartado 5.1) y el Anexo A. Los nombres, el contenido y la correspondencia de columnas de esos archivos siguen pendientes. | Borrador anterior |
+| 0.12 | Comportamiento del guardado de Configuración (apartado 2.9.2, reglas 10 a 15): el botón Guardar arranca inactivo y se activa sólo con un cambio real, no se reescribe lo idéntico, el guardado incompleto se permite con un diálogo modal de advertencia, cada guardado sobrescribe el valor anterior, los campos se editan de a uno con un ícono de lápiz sobre un formulario en sólo lectura, y cada campo de ruta comprueba existencia y acceso con un indicador de progreso dentro del propio campo. | Borrador actualizado |
 
 **La versión 0.9 no representa todavía una especificación cerrada ni
 autorización para comenzar todas las funcionalidades.** Los pendientes

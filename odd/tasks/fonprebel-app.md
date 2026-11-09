@@ -121,8 +121,9 @@ Aceptación: al escribir una ruta inexistente se ve el indicador dentro del camp
 | B6 | Fase 5: informe Excel de notificaciones | S14 | pendiente | | |
 | B7 | Pipeline progresivo por jubilado (2→3→4), concurrencia, cancelación y progreso | S15 | pendiente | | |
 | C1 | Pruebas unitarias e integrales con archivos de muestra | S9-S14,S20 | pendiente | | |
-| C2 | Publicación autocontenida + instalador + guía de instalación | S21 | pendiente | | |
+| C2 | Publicación autocontenida + guía de instalación | S21 | inline | hecho | `tools/publicar.ps1` + `publicar.bat`: `publish/FonPrebel` (175,4 MB) y `publish/FonPrebel-win-x64.zip` (72,9 MB, 510 entradas) con runtime embebido verificado; `docs/guia-instalacion.md` |
 | C3 | Verificación en una segunda máquina | S21 | pendiente | | |
+| C5 | Instalador (`.msi`/`.msix`) con firma de código, si TI lo exige | S21 | pendiente | | **Bloqueada por §5.5**: la política de TI sobre instaladores y permisos sigue pendiente; el publicado portátil de C2 es la alternativa mientras tanto |
 | C4 | Inicio de sesión contra SQL Server central (etapa final, sólo si se ordena) | S22 | pendiente | | |
 | A11 | Pruebas propias de las pantallas entregadas en L21: Métricas, Ejecución y el patrón de distribución de S25 | S16,S19,S25 | inline | hecho | `tests/FonPrebel.Tests/Presentation/{MetricsBoardTests,ExecutionPhaseItemTests,PageLayoutAdoptionTests}.cs`, 11 pruebas, commit `e1a5d13` |
 | A12 | Cableado del §2.9.2 r2: ofrecer la prueba de conexión al guardar Configuración (hoy sólo existe en la sección Conexiones) | S19 | inline | hecho | oferta tras guardado exitoso + `ConnectionOfferTest`/`Dismiss` en `SettingsViewModel`; 5 pruebas (rojo real observado antes de cablear), commit `b7d7995` |
@@ -173,7 +174,7 @@ El gate de writers exige referenciar la tarea como `T<n>`. El alias es la posici
 | B7 | T22 | C1 | T23 | C2 | T24 |
 | C3 | T25 | C4 | T26 | A11 | T27 |
 | A12 | T28 | A13 | T29 | A14 | T30 |
-| A15 | T31 |  |  |  |  |
+| A15 | T31 | C5 | T32 |  |  |
 
 L9 — 2026-11-06 — A1 implementado y verificado. Comandos observados: `dotnet build FonPrebel.sln -v q` → "Compilación correcta. 0 Advertencia(s) 0 Errores"; `dotnet test FonPrebel.sln --nologo` → "Con error: 0, Superado: 6, Omitido: 0, Total: 6"; arranque real de `FonPrebel.exe` → seguía en ejecución a los 7 segundos (se cerró desde el script). Hallazgos: el SDK 10 crea `.slnx` por defecto y **VS 2022 no lo abre**, así que la solución se generó con `--format sln` (D-03); `NavigationView` de WPF-UI 4.3.0 no acepta contenido hijo, así que la ventana es un `Grid` de dos columnas; `SelectedItem` tiene setter inaccesible y el resaltado inicial se logra con `IsActive = true`. Archivo de código más grande: 91 líneas, dentro del límite de 400.
 

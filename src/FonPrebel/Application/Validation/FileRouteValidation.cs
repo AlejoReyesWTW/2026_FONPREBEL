@@ -68,9 +68,17 @@ public static class FileRouteValidation
             return ValidationResult.Invalid(parameterName, "es obligatoria.");
         }
 
-        return File.Exists(path.Trim())
-            ? ValidationResult.Valid
-            : ValidationResult.Invalid(parameterName, "el archivo no existe.");
+        string trimmed = path.Trim();
+        if (File.Exists(trimmed))
+        {
+            return ValidationResult.Valid;
+        }
+
+        // El error más común del primer uso: pegar la carpeta donde el proceso espera un archivo.
+        // Decirlo con esas palabras evita que el analista siga probando la misma ruta.
+        return Directory.Exists(trimmed)
+            ? ValidationResult.Invalid(parameterName, "esa ruta es una carpeta y esta ruta pide un archivo.")
+            : ValidationResult.Invalid(parameterName, "no existe un archivo en esa ruta, o no se puede acceder a ella.");
     }
 
     private static ValidationResult ValidateExistingFolder(string parameterName, string? path)
@@ -80,9 +88,15 @@ public static class FileRouteValidation
             return ValidationResult.Invalid(parameterName, "es obligatoria.");
         }
 
-        return Directory.Exists(path.Trim())
-            ? ValidationResult.Valid
-            : ValidationResult.Invalid(parameterName, "la carpeta no existe.");
+        string trimmed = path.Trim();
+        if (Directory.Exists(trimmed))
+        {
+            return ValidationResult.Valid;
+        }
+
+        return File.Exists(trimmed)
+            ? ValidationResult.Invalid(parameterName, "esa ruta es un archivo y esta ruta pide una carpeta.")
+            : ValidationResult.Invalid(parameterName, "no existe una carpeta en esa ruta, o no se puede acceder a ella.");
     }
 
     private static bool CanOpenForWriting(string path)

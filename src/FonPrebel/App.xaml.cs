@@ -95,7 +95,7 @@ public partial class App : System.Windows.Application
 
         await _host.StartAsync();
 
-        Log.Information("Aplicación iniciada");
+        Log.Information("Aplicación iniciada — versión {Version}", typeof(App).Assembly.GetName().Version?.ToString() ?? "desconocida");
 
         // S3: la base se prepara antes de abrir la ventana; si no se pudo, el error se muestra de forma
         // visible y la aplicación se cierra, en vez de quedar abierta sin persistencia.

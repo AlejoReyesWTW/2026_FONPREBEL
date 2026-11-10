@@ -41,6 +41,52 @@ public sealed class FonPrebelLoggingTests : IDisposable
         Assert.DoesNotContain("Reintento de verificación", errors);
     }
 
+    /// <summary>
+    /// La bitácora es para el analista y para el soporte: el ruido de las librerías en inglés no entra.
+    /// Sin este recorte, EF Core escribía cada comando SQL y el host su propio ciclo de vida, y el día
+    /// llegaba a decenas de miles de líneas que tapaban los mensajes propios.
+    /// </summary>
+    [Fact]
+    public void Infrastructure_noise_never_reaches_the_analyst_log()
+    {
+        AppPaths paths = new(_temp.Path);
+        DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+
+        using (Logger logger = FonPrebelLogging.CreateConfiguration(paths).CreateLogger())
+        {
+            logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.EntityFrameworkCore.Database.Command")
+                .Information("Executed DbCommand: SELECT Host FROM EmailConfiguration");
+            logger.ForContext(Constants.SourceContextPropertyName, "Microsoft.Hosting.Lifetime")
+                .Information("Application is shutting down...");
+            logger.ForContext(Constants.SourceContextPropertyName, "FonPrebel.Application.Services.BatchService")
+                .Information("Lote creado para el mes en curso");
+        }
+
+        string execution = File.ReadAllText(paths.ExecutionLogPath(today));
+
+        Assert.Contains("Lote creado para el mes en curso", execution);
+        Assert.DoesNotContain("Executed DbCommand", execution);
+        Assert.DoesNotContain("Application is shutting down", execution);
+    }
+
+    /// <summary>El nivel se escribe en español: la bitácora la lee el analista, no un programador.</summary>
+    [Fact]
+    public void The_level_is_written_in_spanish()
+    {
+        AppPaths paths = new(_temp.Path);
+        DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+
+        using (Logger logger = FonPrebelLogging.CreateConfiguration(paths).CreateLogger())
+        {
+            logger.Warning("El servidor de archivos no respondió");
+        }
+
+        string execution = File.ReadAllText(paths.ExecutionLogPath(today));
+
+        Assert.Contains("| AVISO |", execution);
+        Assert.DoesNotContain("| WARNING |", execution);
+    }
+
     [Fact]
     public void Logs_land_in_the_day_folder_with_the_exact_file_names()
     {

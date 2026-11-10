@@ -12,6 +12,17 @@
                      propio para que se puedan cargar y verificar sin levantar toda la aplicación. -->
                 <ResourceDictionary Source="Presentation/Resources/ViewTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--
+                Anexo E: el ProgressRing de WPF-UI 4.3.0 dibuja siempre su anillo de fondo con
+                CoverRingStroke y deja el arco sin color cuando nadie fija el Foreground. El resultado es
+                un cuadro oscuro sin movimiento. Este estilo implícito deja legible cualquier indicador
+                que no declare estilo propio; los que sí lo declaran fijan estos dos valores por su lado.
+            -->
+            <Style TargetType="ui:ProgressRing">
+                <Setter Property="Foreground" Value="#0078D4" />
+                <Setter Property="CoverRingVisibility" Value="Collapsed" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

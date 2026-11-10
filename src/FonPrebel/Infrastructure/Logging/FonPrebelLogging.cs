@@ -15,6 +15,12 @@ namespace FonPrebel.Infrastructure.Logging;
 /// <remarks>
 /// Nunca se registran contraseñas, credenciales ni datos sensibles (S7, S17): la bitácora recibe
 /// mensajes y las cuatro propiedades de contexto, no objetos de configuración ni secretos.
+/// <para>
+/// Sólo se escribe lo que el analista o el soporte pueden leer y usar: el mínimo global es
+/// <see cref="LogEventLevel.Information"/> y las librerías externas se limitan a advertencias.
+/// Sin ese recorte, EF Core volcaba en inglés cada comando SQL y cada apertura de conexión, y la
+/// bitácora del día llegaba a decenas de miles de líneas que tapaban los mensajes propios.
+/// </para>
 /// </remarks>
 public static class FonPrebelLogging
 {
@@ -26,7 +32,10 @@ public static class FonPrebelLogging
         FonPrebelLogLineFormatter formatter = new();
 
         return new LoggerConfiguration()
-            .MinimumLevel.Verbose()
+            .MinimumLevel.Information()
+            // Ruido de infraestructura en inglés: EF Core (SQL, conexiones, comandos) y el host.
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.Sink(new DailyFileSink(paths.ExecutionLogPath, formatter))
             .WriteTo.Sink(new DailyFileSink(paths.ErrorLogPath, formatter), restrictedToMinimumLevel: LogEventLevel.Error);

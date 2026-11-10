@@ -30,7 +30,7 @@ public sealed class RouteValidationOnEditTests
         Assert.False(route1.IsValid);
         Assert.True(route1.ShowsError);
         Assert.Contains(FileRouteValidation.Route1Parameter, route1.Message, StringComparison.Ordinal);
-        Assert.Contains("el archivo no existe", route1.Message, StringComparison.Ordinal);
+        Assert.Contains("no existe un archivo en esa ruta", route1.Message, StringComparison.Ordinal);
 
         bool saved = await context.Settings.SaveAsync();
 
@@ -104,6 +104,38 @@ public sealed class RouteValidationOnEditTests
 
         Assert.False(route4.IsValid);
         Assert.Contains(FileRouteValidation.Route4Parameter, route4.Message, StringComparison.Ordinal);
-        Assert.Contains("la carpeta no existe", route4.Message, StringComparison.Ordinal);
+        Assert.Contains("no existe una carpeta en esa ruta", route4.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_folder_where_a_file_is_expected_says_so_instead_of_claiming_the_file_is_missing()
+    {
+        using ConfigurationTestContext context = new();
+        await context.LoadAsync();
+
+        ValidatedFieldViewModel route1 = context.Settings.Routes.Route1;
+        route1.BeginEditCommand.Execute(null);
+        route1.Value = context.Database.Paths.Root;
+        await route1.PendingValidation;
+
+        Assert.False(route1.IsValid);
+        Assert.Contains("esa ruta es una carpeta", route1.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_file_where_a_folder_is_expected_says_so_instead_of_claiming_the_folder_is_missing()
+    {
+        using ConfigurationTestContext context = new();
+        await context.LoadAsync();
+        string existingFile = Path.Combine(context.Database.Paths.Root, "consolidado.xlsx");
+        await File.WriteAllTextAsync(existingFile, "x");
+
+        ValidatedFieldViewModel route2 = context.Settings.Routes.Route2;
+        route2.BeginEditCommand.Execute(null);
+        route2.Value = existingFile;
+        await route2.PendingValidation;
+
+        Assert.False(route2.IsValid);
+        Assert.Contains("esa ruta es un archivo", route2.Message, StringComparison.Ordinal);
     }
 }

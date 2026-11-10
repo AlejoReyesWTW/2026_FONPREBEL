@@ -84,6 +84,9 @@
                                                      VerticalAlignment="Center">
                                         <ui:ProgressRing.Style>
                                             <Style TargetType="ui:ProgressRing">
+                                                <!-- El anillo de fondo oscuro es el que se veía como un cuadro. -->
+                                                <Setter Property="Foreground" Value="#0078D4" />
+                                                <Setter Property="CoverRingVisibility" Value="Collapsed" />
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsChecking}" Value="True">

@@ -50,12 +50,12 @@ public sealed class FonPrebelLogLineFormatter : ITextFormatter
 
     private static string RenderLevel(LogEventLevel level) => level switch
     {
-        LogEventLevel.Verbose => "VERBOSE",
-        LogEventLevel.Debug => "DEBUG",
+        LogEventLevel.Verbose => "DETALLE",
+        LogEventLevel.Debug => "DEPURA",
         LogEventLevel.Information => "INFO",
-        LogEventLevel.Warning => "WARNING",
+        LogEventLevel.Warning => "AVISO",
         LogEventLevel.Error => "ERROR",
-        LogEventLevel.Fatal => "FATAL",
+        LogEventLevel.Fatal => "CRITICO",
         _ => level.ToString().ToUpperInvariant(),
     };
 

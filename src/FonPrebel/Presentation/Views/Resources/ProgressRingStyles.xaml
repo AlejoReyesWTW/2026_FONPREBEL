@@ -1,0 +1,64 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <!--
+        Anexo E y §2.9.2 r15: indicadores de trabajo en curso.
+
+        Los tres comparten lo que faltaba para que se vieran. El ProgressRing de WPF-UI 4.3.0 no tiene
+        IsActive: dibuja siempre el anillo de fondo con CoverRingStroke y, cuando nadie fija el
+        Foreground, el arco que gira queda sin color visible. El resultado en pantalla es un cuadro con
+        borde oscuro y ningún movimiento, que es exactamente lo que reportó el analista. Se corrige
+        ocultando el anillo de fondo (CoverRingVisibility Collapsed), fijando el arco con el azul de la
+        acción principal y subiendo el tamaño mínimo a 16 px para que se lea.
+        El margen y la ocultación por omisión no cambian: el indicador ocupa su propia columna y sólo
+        aparece mientras ese campo o esa sección trabajan.
+    -->
+    <Style x:Key="FieldProgressRing" TargetType="ui:ProgressRing">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Margin" Value="8,0,0,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="#0078D4" />
+        <Setter Property="CoverRingVisibility" Value="Collapsed" />
+        <Setter Property="IsIndeterminate" Value="True" />
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsValidating}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="BusyProgressRing" TargetType="ui:ProgressRing">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="#0078D4" />
+        <Setter Property="CoverRingVisibility" Value="Collapsed" />
+        <Setter Property="IsIndeterminate" Value="True" />
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="CredentialProgressRing" TargetType="ui:ProgressRing">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Margin" Value="12,0,0,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="#0078D4" />
+        <Setter Property="CoverRingVisibility" Value="Collapsed" />
+        <Setter Property="IsIndeterminate" Value="True" />
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Credentials.IsBusy}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

@@ -76,8 +76,10 @@ public sealed class SettingsFieldInteractionTests
         RunOnUiThread(() =>
         {
             SettingsView view = CreateView(context);
+            // 16 px es el tamaño del indicador del campo (ProgressRingStyles.xaml); sirve para distinguirlo
+            // del indicador de sección, que no vive en una columna del campo.
             List<FrameworkElement> rings = FindVisualChildren<FrameworkElement>(view)
-                .Where(element => element.GetType().Name == "ProgressRing" && element.Width == 12d)
+                .Where(element => element.GetType().Name == "ProgressRing" && element.Width == 16d)
                 .ToList();
 
             Assert.Equal(context.Settings.AllFields.Count, rings.Count);

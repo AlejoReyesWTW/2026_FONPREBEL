@@ -8,24 +8,10 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/FonPrebel;component/Presentation/Views/Layout/PageLayout.xaml" />
+                <ResourceDictionary Source="/FonPrebel;component/Presentation/Views/Resources/ProgressRingStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="FieldStateToVisibility" />
-
-            <!-- Anexo E y §2.9.2 r15: el spinner del campo sólo se ve mientras ese campo valida. -->
-            <Style x:Key="FieldProgressRing" TargetType="ui:ProgressRing">
-                <Setter Property="Width" Value="12" />
-                <Setter Property="Height" Value="12" />
-                <Setter Property="Margin" Value="8,0,0,0" />
-                <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="IsIndeterminate" Value="True" />
-                <Setter Property="Visibility" Value="Collapsed" />
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsValidating}" Value="True">
-                        <Setter Property="Visibility" Value="Visible" />
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
 
             <!--
                 Acción principal (§2.9.2 r10). Plantilla propia: WPF-UI pinta "Primary" con el acento de
@@ -57,31 +43,7 @@
                 </Setter>
             </Style>
 
-            <!-- Trabajo en curso de la pantalla y de la credencial. -->
-            <Style x:Key="BusyProgressRing" TargetType="ui:ProgressRing">
-                <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="IsIndeterminate" Value="True" />
-                <Setter Property="Visibility" Value="Collapsed" />
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                        <Setter Property="Visibility" Value="Visible" />
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-
-            <Style x:Key="CredentialProgressRing" TargetType="ui:ProgressRing">
-                <Setter Property="Width" Value="16" />
-                <Setter Property="Height" Value="16" />
-                <Setter Property="Margin" Value="12,0,0,0" />
-                <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="IsIndeterminate" Value="True" />
-                <Setter Property="Visibility" Value="Collapsed" />
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding Credentials.IsBusy}" Value="True">
-                        <Setter Property="Visibility" Value="Visible" />
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
+            <!-- Trabajo en curso de la pantalla y de la credencial: estilos en ProgressRingStyles.xaml. -->
 
             <!-- Anexo E y §2.9.2 r14-r19: el indicador tiene su columna, nunca encima del texto del campo. -->
             <DataTemplate x:Key="ValidatedFieldTemplate" DataType="{x:Type config:ValidatedFieldViewModel}">

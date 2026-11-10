@@ -156,6 +156,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
             }
 
             SetStorageState(outcome);
+            _logger.LogInformation("Configuración leída de la base local: {Resultado}", outcome);
 
             await Credentials.RefreshAsync(cancellationToken).ConfigureAwait(true);
             await RevalidateAllAsync().ConfigureAwait(true);
@@ -194,6 +195,13 @@ public sealed partial class SettingsViewModel : SectionViewModel
             ValidatedFieldViewModel[] blockers = AllFields.Where(field => field.IsBlocking).ToArray();
             if (blockers.Length > 0)
             {
+                // S17: el rechazo queda en la bitácora con su motivo, para que el soporte pueda ver por
+                // qué no se guardó sin pedirle al analista que recuerde el mensaje en pantalla.
+                _logger.LogWarning(
+                    "Guardado de configuración rechazado: {Cantidad} campo(s) inválido(s) — {Campos}",
+                    blockers.Length,
+                    string.Join("; ", blockers.Select(field => $"{field.Label}: {field.Motive}")));
+
                 SetStatus(DescribeBlockers(blockers), isError: true);
                 PublishReadiness();
 
@@ -222,6 +230,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
             HasStorageError = false;
             SetStatus(SavedMessage, isError: false);
+            _logger.LogInformation("Configuración guardada por el analista");
 
             // Anexo E: al guardar se limpian los indicadores temporales; el valor sigue siendo válido.
             foreach (SettingsSectionViewModel section in Sections)

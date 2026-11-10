@@ -70,7 +70,7 @@ public sealed class SettingsPartialSaveTests
         Assert.Equal(0, context.ConfirmationDialog.RequestCount);
         Assert.True(context.Settings.HasStatusError);
         Assert.Contains(FileRouteValidation.Route1Parameter, context.Settings.StatusMessage, StringComparison.Ordinal);
-        Assert.Contains("el archivo no existe", context.Settings.StatusMessage, StringComparison.Ordinal);
+        Assert.Contains("no existe un archivo en esa ruta", context.Settings.StatusMessage, StringComparison.Ordinal);
         Assert.DoesNotContain(FileRouteValidation.Route2Parameter, context.Settings.StatusMessage, StringComparison.Ordinal);
         Assert.Null((await context.ConfigurationStore.ReadTextAsync(AppConfigurationKeys.Route1)).Value);
     }

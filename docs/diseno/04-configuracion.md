@@ -12,9 +12,9 @@ La columna *Almacenamiento* respeta literalmente la tabla de §2.9.1, incluido e
 
 | Parámetro | Almacenamiento | Obligatorio | Validación | Valor |
 |---|---|---|---|---|
-| Servidor | `EmailConfiguration.Host` | sí | no vacío | por confirmar con TI |
-| Puerto | `EmailConfiguration.Port` | **sí, siempre**, con o sin proxy (§2.9.2 r8) | entero 1–65535 | por confirmar con TI |
-| Seguridad de la conexión | `EmailConfiguration.Security` | sí | conjunto de valores **por definir** (§2.9.1) | por confirmar |
+| Servidor | `EmailConfiguration.Host` | sí | no vacío | `smtp.office365.com` — **verificado el 2026-11-10** por MX del dominio; falta el visto bueno de TI |
+| Puerto | `EmailConfiguration.Port` | **sí, siempre**, con o sin proxy (§2.9.2 r8) | entero 1–65535 | `587` — verificado contra el servidor real; falta el visto bueno de TI |
+| Seguridad de la conexión | `EmailConfiguration.Security` | sí | conjunto de valores **por definir** (§2.9.1) | `STARTTLS` — el servidor anuncia `250-STARTTLS`; falta el visto bueno de TI |
 | Proxy activado (interruptor) | `AppConfiguration` clave `Mail.ProxyEnabled` | sí | booleano | según el entorno |
 | Proxy (campo de texto) | `AppConfiguration` clave `Mail.ProxyText` | **sólo si el proxy está activado** | formato **por confirmar con TI** | por confirmar |
 | Cuenta (usuario) | `EmailConfiguration.Account` | **depende del protocolo** | texto; sólo si hay autenticación con usuario | por confirmar |

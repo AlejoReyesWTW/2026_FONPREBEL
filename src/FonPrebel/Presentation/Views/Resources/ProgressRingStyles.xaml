@@ -3,25 +3,52 @@
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
 
     <!--
-        Anexo E y §2.9.2 r15: indicadores de trabajo en curso.
+        Anexo E y §2.9.2 r15: indicador del campo.
 
-        Los tres comparten lo que faltaba para que se vieran. El ProgressRing de WPF-UI 4.3.0 no tiene
-        IsActive: dibuja siempre el anillo de fondo con CoverRingStroke y, cuando nadie fija el
-        Foreground, el arco que gira queda sin color visible. El resultado en pantalla es un cuadro con
-        borde oscuro y ningún movimiento, que es exactamente lo que reportó el analista. Se corrige
-        ocultando el anillo de fondo (CoverRingVisibility Collapsed), fijando el arco con el azul de la
-        acción principal y subiendo el tamaño mínimo a 16 px para que se lea.
-        El margen y la ocultación por omisión no cambian: el indicador ocupa su propia columna y sólo
-        aparece mientras ese campo o esa sección trabajan.
+        Es un arco dibujado por nosotros y no el ProgressRing de WPF-UI 4.3.0. Ese control no tiene
+        IsActive y no dibuja el arco cuando nadie fija el color: en pantalla quedaba sólo el anillo de
+        fondo oscuro —el "cuadro con borde negro" que reportó el analista— y al ocultar ese anillo no
+        aparecía nada. Con una plantilla propia el arco azul gira siempre mientras el campo valida, y su
+        presencia en el árbol visual se puede verificar.
     -->
-    <Style x:Key="FieldProgressRing" TargetType="ui:ProgressRing">
+    <ControlTemplate x:Key="SpinnerTemplate" TargetType="Control">
+        <Grid Width="16" Height="16">
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard RepeatBehavior="Forever">
+                            <DoubleAnimation Storyboard.TargetName="Arc"
+                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                             From="0"
+                                             To="360"
+                                             Duration="0:0:0.7" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
+            <Ellipse Stroke="#330078D4" StrokeThickness="2" />
+            <Path x:Name="Arc"
+                  Stroke="#0078D4"
+                  StrokeThickness="2"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Data="M8,1 A7,7 0 0 1 15,8">
+                <Path.RenderTransform>
+                    <RotateTransform CenterX="8" CenterY="8" />
+                </Path.RenderTransform>
+            </Path>
+        </Grid>
+    </ControlTemplate>
+
+    <Style x:Key="FieldProgressRing" TargetType="Control">
         <Setter Property="Width" Value="16" />
         <Setter Property="Height" Value="16" />
         <Setter Property="Margin" Value="8,0,0,0" />
         <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="#0078D4" />
-        <Setter Property="CoverRingVisibility" Value="Collapsed" />
-        <Setter Property="IsIndeterminate" Value="True" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="AutomationProperties.Name" Value="Validando la ruta" />
+        <Setter Property="Template" Value="{StaticResource SpinnerTemplate}" />
         <Setter Property="Visibility" Value="Collapsed" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsValidating}" Value="True">

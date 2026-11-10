@@ -89,7 +89,7 @@
                                                 IsReadOnly="{Binding IsReadOnly, Mode=OneWay}"
                                                 Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
 
-                                    <ui:ProgressRing Grid.Column="1" Style="{StaticResource FieldProgressRing}" />
+                                    <Control Grid.Column="1" Style="{StaticResource FieldProgressRing}" />
                                 </Grid>
                             </Border>
 

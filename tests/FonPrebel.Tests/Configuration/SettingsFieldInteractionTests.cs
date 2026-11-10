@@ -1,4 +1,6 @@
+using System.IO;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using FonPrebel.Presentation.ViewModels.Config;
@@ -76,10 +78,10 @@ public sealed class SettingsFieldInteractionTests
         RunOnUiThread(() =>
         {
             SettingsView view = CreateView(context);
-            // 16 px es el tamaño del indicador del campo (ProgressRingStyles.xaml); sirve para distinguirlo
-            // del indicador de sección, que no vive en una columna del campo.
+            // El indicador del campo es una plantilla propia (ProgressRingStyles.xaml), no el ProgressRing
+            // de WPF-UI: ése no dibujaba el arco. Se localiza por su nombre de accesibilidad.
             List<FrameworkElement> rings = FindVisualChildren<FrameworkElement>(view)
-                .Where(element => element.GetType().Name == "ProgressRing" && element.Width == 16d)
+                .Where(element => AutomationProperties.GetName(element) == "Validando la ruta")
                 .ToList();
 
             Assert.Equal(context.Settings.AllFields.Count, rings.Count);
@@ -92,6 +94,38 @@ public sealed class SettingsFieldInteractionTests
                 Assert.True(Grid.GetColumn(ring) > 0);
             });
         });
+    }
+
+    /// <summary>
+    /// La queja concreta del analista: escribía una ruta y no veía ningún indicador. Esta prueba fija que
+    /// el indicador está visible en el instante en que el campo valida, no sólo que exista en el árbol.
+    /// </summary>
+    [Fact]
+    public async Task The_field_indicator_is_visible_while_the_route_is_being_checked()
+    {
+        using ConfigurationTestContext context = new();
+        await context.LoadAsync();
+
+        ValidatedFieldViewModel route1 = context.Settings.Routes.Route1;
+
+        RunOnUiThread(() =>
+        {
+            SettingsView view = CreateView(context);
+
+            route1.BeginEditCommand.Execute(null);
+            route1.Value = Path.Combine(context.Database.Paths.Root, "ruta-en-curso.xlsx");
+            view.UpdateLayout();
+
+            List<FrameworkElement> shown = FindVisualChildren<FrameworkElement>(view)
+                .Where(element => AutomationProperties.GetName(element) == "Validando la ruta")
+                .Where(element => element.Visibility == Visibility.Visible)
+                .ToList();
+
+            Assert.True(route1.IsValidating, "el campo tiene que estar validando en este instante.");
+            Assert.NotEmpty(shown);
+        });
+
+        await route1.PendingValidation;
     }
 
     private static SettingsView CreateView(ConfigurationTestContext context)

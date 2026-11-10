@@ -1,9 +1,9 @@
 # Fon Prebel - Manejo de Pólizas de Jubilados
 
-**Versión 0.13 -- Vacío no es inválido, aviso de guardado parcial y feedback del formulario**\
+**Versión 0.14 -- Bitácoras legibles: en español, sin ruido técnico y con una entrada por proceso**\
 **Estado:** Borrador en construcción.\
-**Documento base:** Versión 0.12.\
-**Fecha de actualización:** 7 de noviembre de 2026.
+**Documento base:** Versión 0.13.\
+**Fecha de actualización:** 10 de noviembre de 2026.
 
 > Este documento conserva los requisitos funcionales de la versión 0.2 e
 > incorpora las decisiones acordadas durante la revisión. Los puntos no
@@ -792,6 +792,21 @@ Se mantienen los logs en archivos. **No se almacenarán logs en SQLite.**
 -   Los logs deben incluir información útil para diagnosticar el
     proceso: fecha/hora, nivel, lote, ejecución, fase y resultado, según
     corresponda.
+-   Los logs se escriben en español. El nivel se nombra con una palabra
+    del idioma (`INFO`, `AVISO`, `ERROR`) y los mensajes describen el
+    proceso del aplicativo, no los de las librerías que lo componen.
+-   No se registra el ruido técnico de la infraestructura: sentencias
+    SQL, apertura y cierre de conexiones de base de datos y ciclo de
+    vida del host. Tapa los mensajes propios y no ayuda a diagnosticar
+    el proceso.
+-   Cada proceso deja su entrada con su resultado: arranque con la
+    versión del aplicativo, lectura y guardado de la configuración,
+    comprobación de cada ruta, comprobación de cada conexión y, cuando
+    existan las fases, el inicio y el fin de cada fase y de cada proceso
+    dentro de la fase.
+-   Un rechazo se registra con su motivo y con los campos que lo causan,
+    para que el soporte no dependa de lo que el analista recuerde haber
+    visto en pantalla.
 -   No registrar contraseñas, secretos ni información personal
     innecesaria.
 -   El historial consultable de lotes y estados operativos se guarda en
@@ -1336,6 +1351,7 @@ Estas reglas aplican al implementar esta especificación:
 | 0.11 | La ruta 2 pasa de 16 a 13 archivos de póliza por decisión del analista. Se actualizan el resumen (apartado 1), la ruta 2 (apartado 2.12), el flujo de la fase 1 (apartado 4), los pendientes de datos y reglas de negocio (apartado 5.1) y el Anexo A. Los nombres, el contenido y la correspondencia de columnas de esos archivos siguen pendientes. | Borrador anterior |
 | 0.12 | Comportamiento del guardado de Configuración (apartado 2.9.2, reglas 10 a 15): el botón Guardar arranca inactivo y se activa sólo con un cambio real, no se reescribe lo idéntico, el guardado incompleto se permite con un diálogo modal de advertencia, cada guardado sobrescribe el valor anterior, los campos se editan de a uno con un ícono de lápiz sobre un formulario en sólo lectura, y cada campo de ruta comprueba existencia y acceso con un indicador de progreso dentro del propio campo. | Borrador actualizado |
 | 0.13 | Corrección del guardado de Configuración (apartado 2.9.2, reglas 16 a 19): un campo vacío no es inválido y no impide guardar — dispara el aviso del punto 12 —, un valor inválido sí bloquea, el rechazo nombra los campos que lo causan, el indicador de validación se mantiene visible un tiempo perceptible y la edición no atrapa el foco. Corrige la versión 0.12, donde un obligatorio vacío bloqueaba el guardado en silencio. | Borrador actualizado |
+| 0.14 | Bitácoras legibles y útiles (apartado 2.17): se escriben en español, con el nivel nombrado en español; no se registra el ruido técnico de las librerías de infraestructura —sentencias SQL, conexiones de base de datos, ciclo de vida del host—; cada proceso deja su entrada con su resultado, incluidos el arranque con la versión y el rechazo de un guardado con su motivo y sus campos. | Borrador actualizado |
 
 **La versión 0.9 no representa todavía una especificación cerrada ni
 autorización para comenzar todas las funcionalidades.** Los pendientes

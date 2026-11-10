@@ -139,7 +139,8 @@
                                        Opacity="0.6"
                                        VerticalAlignment="Center" />
                         </Grid>
-                        <ScrollViewer Grid.Row="1"
+                        <ScrollViewer x:Name="ExecutionLogScroll"
+                                      Grid.Row="1"
                                       Margin="0,8,0,0"
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Auto">
@@ -171,7 +172,8 @@
                                        Opacity="0.6"
                                        VerticalAlignment="Center" />
                         </Grid>
-                        <ScrollViewer Grid.Row="1"
+                        <ScrollViewer x:Name="ErrorLogScroll"
+                                      Grid.Row="1"
                                       Margin="0,8,0,0"
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Auto">

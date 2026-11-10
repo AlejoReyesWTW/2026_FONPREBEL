@@ -76,7 +76,7 @@ public sealed class SettingsPartialSaveTests
     }
 
     [Fact]
-    public async Task An_empty_required_field_is_pending_and_not_an_error()
+    public async Task An_empty_required_field_does_not_block_the_save_and_is_never_green()
     {
         using ConfigurationTestContext context = new();
         await context.LoadAsync();
@@ -84,9 +84,32 @@ public sealed class SettingsPartialSaveTests
         ValidatedFieldViewModel route1 = context.Settings.Routes.Route1;
 
         Assert.False(route1.IsValid);
-        Assert.False(route1.ShowsError);
-        Assert.False(route1.ShowsSuccess);
+        Assert.False(route1.IsBlocking, "un obligatorio vacío no impide guardar (§2.9.2 r16).");
+        Assert.False(route1.ShowsSuccess, "un campo vacío nunca se muestra en verde.");
         Assert.Contains("obligatoria", route1.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Lo que reportó el analista: editaba, borraba lo escrito y el campo quedaba en verde. Vacío no
+    /// bloquea el guardado, pero se señala en rojo como incompleto.
+    /// </summary>
+    [Fact]
+    public async Task Clearing_a_field_after_editing_leaves_it_red_and_never_green()
+    {
+        using ConfigurationTestContext context = new();
+        await context.LoadAsync();
+
+        ValidatedFieldViewModel route1 = context.Settings.Routes.Route1;
+        route1.BeginEditCommand.Execute(null);
+        route1.Value = Path.Combine(context.Database.Paths.Root, "consolidado.xlsx");
+        await route1.PendingValidation;
+
+        route1.Value = string.Empty;
+        await route1.PendingValidation;
+
+        Assert.True(route1.ShowsError, "un campo vacío se señala en rojo como incompleto.");
+        Assert.False(route1.ShowsSuccess, "un campo vacío nunca se muestra en verde.");
+        Assert.False(route1.IsBlocking, "pero no impide guardar.");
     }
 
     [Fact]

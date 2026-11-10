@@ -15,7 +15,11 @@ namespace FonPrebel.Presentation.ViewModels;
 public sealed partial class LogsViewModel : SectionViewModel
 {
     /// <summary>Cantidad máxima de líneas que se leen de cada bitácora.</summary>
-    public const int MaximumLinesPerLog = 2000;
+    /// <remarks>
+    /// S17: la vista muestra lo más reciente. Se lee la cola del archivo y no el día completo, para que
+    /// una bitácora larga no tape con historial viejo lo que acaba de pasar.
+    /// </remarks>
+    public const int MaximumLinesPerLog = 300;
 
     private readonly AppPaths _paths;
 

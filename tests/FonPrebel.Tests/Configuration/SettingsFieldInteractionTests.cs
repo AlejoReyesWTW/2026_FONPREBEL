@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using FonPrebel.Presentation.ViewModels.Config;
 using FonPrebel.Presentation.Views;
 
@@ -97,35 +98,53 @@ public sealed class SettingsFieldInteractionTests
     }
 
     /// <summary>
-    /// La queja concreta del analista: escribía una ruta y no veía ningún indicador. Esta prueba fija que
-    /// el indicador está visible en el instante en que el campo valida, no sólo que exista en el árbol.
+    /// La queja concreta del analista: escribía una ruta y no veía ningún indicador.
+    ///
+    /// Se comprueba la plantilla de forma determinista y no esperando a que el campo esté validando: esa
+    /// espera era una carrera —la comprobación de una ruta termina en microsegundos y el estado ya volvió—
+    /// y dejaba pasar plantillas que no dibujan nada. Aquí se instancia el indicador con su plantilla real
+    /// y se exige que pinte píxeles.
     /// </summary>
     [Fact]
-    public async Task The_field_indicator_is_visible_while_the_route_is_being_checked()
+    public void The_spinner_template_paints_pixels()
     {
-        using ConfigurationTestContext context = new();
-        await context.LoadAsync();
-
-        ValidatedFieldViewModel route1 = context.Settings.Routes.Route1;
-
         RunOnUiThread(() =>
         {
-            SettingsView view = CreateView(context);
+            SettingsView view = new();
 
-            route1.BeginEditCommand.Execute(null);
-            route1.Value = Path.Combine(context.Database.Paths.Root, "ruta-en-curso.xlsx");
-            view.UpdateLayout();
+            ControlTemplate template = (ControlTemplate)view.FindResource("SpinnerTemplate");
+            Control indicator = new()
+            {
+                Width = 16,
+                Height = 16,
+                Template = template,
+            };
 
-            List<FrameworkElement> shown = FindVisualChildren<FrameworkElement>(view)
-                .Where(element => AutomationProperties.GetName(element) == "Validando la ruta")
-                .Where(element => element.Visibility == Visibility.Visible)
-                .ToList();
+            Grid host = new() { Width = 16, Height = 16 };
+            host.Children.Add(indicator);
+            host.Measure(new Size(16, 16));
+            host.Arrange(new Rect(0, 0, 16, 16));
+            host.UpdateLayout();
 
-            Assert.True(route1.IsValidating, "el campo tiene que estar validando en este instante.");
-            Assert.NotEmpty(shown);
+            Assert.True(indicator.ActualWidth > 0 && indicator.ActualHeight > 0, "el indicador no se midió.");
+
+            RenderTargetBitmap bitmap = new(16, 16, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(host);
+
+            byte[] pixels = new byte[16 * 16 * 4];
+            bitmap.CopyPixels(pixels, 16 * 4, 0);
+
+            int painted = 0;
+            for (int index = 3; index < pixels.Length; index += 4)
+            {
+                if (pixels[index] > 0)
+                {
+                    painted++;
+                }
+            }
+
+            Assert.True(painted > 0, "la plantilla del indicador no dibuja ningún píxel.");
         });
-
-        await route1.PendingValidation;
     }
 
     private static SettingsView CreateView(ConfigurationTestContext context)

@@ -21,7 +21,7 @@ public sealed partial class ValidatedFieldViewModel : ObservableObject
     /// §2.9.2 r18: tiempo mínimo que el indicador queda visible. Una comprobación que termina antes de
     /// que el usuario alcance a verla no comunica nada.
     /// </summary>
-    public static readonly TimeSpan DefaultMinimumIndicatorDuration = TimeSpan.FromMilliseconds(400);
+    public static readonly TimeSpan DefaultMinimumIndicatorDuration = TimeSpan.FromMilliseconds(700);
 
     private readonly Func<string?, ValidationResult> _validate;
     private readonly TimeSpan _minimumIndicatorDuration;
@@ -140,14 +140,19 @@ public sealed partial class ValidatedFieldViewModel : ObservableObject
     /// <summary>§2.9.2 r16: obligatorio todavía sin completar; cuenta como configuración incompleta.</summary>
     public bool IsMissing => !IsFilled && !IsValid;
 
-    /// <summary>Indica si el campo muestra el borde y el mensaje rojos del Anexo E.</summary>
-    public bool ShowsError => HasIndicator && IsBlocking;
+    /// <summary>
+    /// Anexo E: el campo se muestra en rojo mientras no esté completo y comprobado. Un campo vacío no
+    /// impide guardar (§2.9.2 r16), pero sí se señala en rojo para que el analista vea de un vistazo qué
+    /// le falta. Antes el rojo estaba atado a <see cref="IsBlocking"/>, así que un obligatorio vacío no
+    /// se señalaba y un campo opcional vacío llegaba a mostrarse en verde.
+    /// </summary>
+    public bool ShowsError => HasIndicator && !IsValidating && !(IsValid && IsFilled);
 
     /// <summary>§2.9.2 r16: indica si el campo muestra el motivo en tono neutro por estar sin completar.</summary>
     public bool ShowsPending => HasIndicator && IsMissing;
 
-    /// <summary>Indica si el campo muestra el borde verde del Anexo E.</summary>
-    public bool ShowsSuccess => HasIndicator && IsValid;
+    /// <summary>Anexo E: verde sólo cuando el campo está completo y su comprobación pasó.</summary>
+    public bool ShowsSuccess => HasIndicator && IsValid && IsFilled;
 
     /// <summary>
     /// §2.9.2 r17: motivo de la comprobación sin repetir el nombre del campo, que la pantalla compone con

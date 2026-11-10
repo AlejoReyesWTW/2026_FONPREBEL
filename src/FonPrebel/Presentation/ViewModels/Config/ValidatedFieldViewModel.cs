@@ -1,11 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FonPrebel.Application.Validation;
+using Serilog;
 
 namespace FonPrebel.Presentation.ViewModels.Config;
 
 /// <summary>
-/// Anexo E: un campo con su propia validación. Mientras valida muestra un <c>ProgressRing</c> de 12 px;
+/// Anexo E: un campo con su propia validación. Mientras valida muestra un indicador de progreso de 16 px;
 /// al terminar queda en verde o en rojo con el mensaje concreto que trae el nombre del parámetro, y
 /// cada cambio vuelve a validar desde cero.
 /// </summary>
@@ -21,7 +22,7 @@ public sealed partial class ValidatedFieldViewModel : ObservableObject
     /// §2.9.2 r18: tiempo mínimo que el indicador queda visible. Una comprobación que termina antes de
     /// que el usuario alcance a verla no comunica nada.
     /// </summary>
-    public static readonly TimeSpan DefaultMinimumIndicatorDuration = TimeSpan.FromMilliseconds(700);
+    public static readonly TimeSpan DefaultMinimumIndicatorDuration = TimeSpan.FromMilliseconds(800);
 
     private readonly Func<string?, ValidationResult> _validate;
     private readonly TimeSpan _minimumIndicatorDuration;
@@ -180,6 +181,15 @@ public sealed partial class ValidatedFieldViewModel : ObservableObject
             {
                 return;
             }
+
+            // S17 y §2.9.2 r18: cada comprobación que llega a su resultado deja una línea en la bitácora.
+            // Es la huella que permite saber si el campo se comprobó sin depender de haber visto el
+            // indicador, que dura menos de un segundo. Se registra sólo el resultado asentado: las
+            // comprobaciones que el analista invalida escribiendo siguen sin escribir nada.
+            Log.Information(
+                "Comprobación de {Campo}: {Resultado}",
+                Label,
+                result.IsValid ? "correcta" : result.Message);
 
             Apply(result);
         }

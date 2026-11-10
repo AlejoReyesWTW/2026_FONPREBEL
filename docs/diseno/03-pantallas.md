@@ -1,7 +1,7 @@
 # D3 — Diseño de pantallas
 
 Estado: propuesta de diseño. No hay XAML escrito.
-Fuente: `Specs/especificacion-fon-prebel-v0.13.md` §2.14, §2.17, §2.18, §2.19, §2.20, §2.21, §2.22, Anexo D, Anexo E.
+Fuente: `Specs/especificacion-fon-prebel-v0.14.md` §2.14, §2.17, §2.18, §2.19, §2.20, §2.21, §2.22, Anexo D, Anexo E.
 Stack visual: WPF + **WPF-UI de Lepoco** (Fluent), MVVM con CommunityToolkit.Mvvm, .NET 8. Un único proyecto; las vistas viven en `Presentation/Views`.
 
 ## A. Principios visuales (§2.20)

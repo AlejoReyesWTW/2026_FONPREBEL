@@ -1,7 +1,7 @@
 # D5 — Matriz de configuración y reglas de credenciales
 
 Estado: propuesta de diseño. No hay nada implementado.
-Fuente: `Specs/especificacion-fon-prebel-v0.13.md` §2.9, §2.9.1, §2.9.2, §2.10, §2.10.1, §2.10.2, Anexo D.
+Fuente: `Specs/especificacion-fon-prebel-v0.14.md` §2.9, §2.9.1, §2.9.2, §2.10, §2.10.1, §2.10.2, Anexo D.
 Regla que gobierna el documento: "**Ningún parámetro tiene un valor por defecto inventado**: los valores reales los entregan TI y el analista" (§2.9.1). Todo campo sin valor confirmado se guarda nulo y se muestra vacío.
 
 ## 1. Parámetros
